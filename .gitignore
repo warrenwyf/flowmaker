@@ -1,3 +1,10 @@
+# Built files
+dist/
+
+
+# Editors
+*.sublime-*
+
 # Logs
 logs
 *.log

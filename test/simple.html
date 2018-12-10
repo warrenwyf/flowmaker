@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+	<title>flowmaker - simple test</title>
+
+	<style type="text/css">
+	html, body {
+		overflow: hidden;
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		padding: 0;
+	}
+
+	#flow {
+		width: 100%;
+		height: 100%;
+		touch-action: none;
+	}
+	</style>
+</head>
+
+<body>
+
+	<div id="flow"></div>
+
+	<script type="text/javascript" src="../dist/flowmaker.js"></script>
+	<script type="text/javascript">
+	console.log('flowmaker version:', flowmaker.version)
+
+	var flow = new flowmaker.Flow('flow');
+
+	var node = new flowmaker.Node({
+		icon: 'img/icon-unknown.png',
+	});
+	node.addToFlow(flow, 100, 100);
+	</script>
+
+</body>
+
+</html>

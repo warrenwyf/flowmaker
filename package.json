@@ -1,0 +1,29 @@
+{
+  "name": "flowmaker",
+  "author": "warrenwyf",
+  "version": "0.0.1",
+  "description": "Draw flow charts in browser",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/warrenwyf/flowmaker"
+  },
+  "license": "Apache-2.0",
+  "main": "dist/flowmaker.js",
+  "files": [
+    "src",
+    "dist/*.js"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "test": "tape test/**/*.js"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
+    "rollup": "^0.67.4",
+    "rollup-plugin-babel": "^4.0.3",
+    "rollup-plugin-json": "^3.1.0",
+    "rollup-plugin-node-resolve": "^4.0.0",
+    "tape": "^4.9.1"
+  }
+}
