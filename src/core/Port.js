@@ -13,15 +13,10 @@ export default class Port {
 		}, options);
 	}
 
-	addToNode(node, idInNode, anchor) {
+	_addToNode(node, idInNode, anchor) {
 		let self = this;
 
-		if (!node || !node._ports || !node._graph) {
-			throw new Error(`Node not found`);
-			return;
-		}
-
-		if (!!self._id) {
+		if (self._node) {
 			throw new Error(`Port<${self._id}> is already in a node`);
 			return;
 		}
@@ -44,28 +39,77 @@ export default class Port {
 
 		let nodeGraph = self._node._graph;
 
-		let port = DomUtil.createSVG('polygon', 'fm-node-port', nodeGraph);
+		let g = DomUtil.createSVG('polygon', 'fm-node-port', nodeGraph);
 		switch (options.type) {
 			case 'input':
-				port.setAttribute('points', `${nodeOptions.bgSize / 5} 0 0 ${-nodeOptions.bgSize / 10} 0 ${nodeOptions.bgSize / 10}`);
+				g.setAttribute('points', `${nodeOptions.bgSize / 5} 0 0 ${-nodeOptions.bgSize / 10} 0 ${nodeOptions.bgSize / 10}`);
 				break;
 			case 'output':
-				port.setAttribute('points', `0 0 ${-nodeOptions.bgSize / 5} ${-nodeOptions.bgSize / 10} ${-nodeOptions.bgSize / 5} ${nodeOptions.bgSize / 10}`);
+				g.setAttribute('cursor', 'crosshair'); // output port can be a Link's upstream
+				g.setAttribute('points', `0 0 ${-nodeOptions.bgSize / 5} ${-nodeOptions.bgSize / 10} ${-nodeOptions.bgSize / 5} ${nodeOptions.bgSize / 10}`);
 				break;
 		}
 
 		let [anchorX, anchorY] = self._anchor;
 
-		port.setAttribute('transform', `translate(${anchorX} ${anchorY})`);
-		port.setAttribute('fill', options.color);
+		g.setAttribute('transform', `translate(${anchorX} ${anchorY})`);
+		g.setAttribute('fill', options.color);
 
 		if (options.borderWidth > 0) {
-			port.setAttribute('stroke', options.borderColor);
-			port.setAttribute('stroke-width', options.borderWidth);
+			g.setAttribute('stroke', options.borderColor);
+			g.setAttribute('stroke-width', options.borderWidth);
 		}
 
-		port.setAttribute('cursor', 'crosshair');
-		// port.addEventListener("mousedown", self._onPortMouseDown);
+		g.addEventListener("mousedown", self._onMouseDown);
+		g.addEventListener("mouseover", self._onMouseOver);
+		g.addEventListener("mouseout", self._onMouseOut);
+
+		g._obj = self;
+	}
+
+	_onMouseDown(e) {
+		let self = this._obj;
+		let node = self._node;
+
+		node._flow.emit({
+			type: 'portMouseDown',
+			data: {
+				nodeId: node._id,
+				portId: self._id,
+				x: e.clientX,
+				y: e.clientY,
+			}
+		});
+	}
+
+	_onMouseOver(e) {
+		let self = this._obj;
+		let node = self._node;
+
+		node._flow.emit({
+			type: 'portMouseOver',
+			data: {
+				nodeId: node._id,
+				portId: self._id,
+				x: e.clientX,
+				y: e.clientY,
+			}
+		});
+	}
+
+	_onMouseOut(e) {
+		let self = this._obj;
+		let node = self._node;
+
+		node._flow.emit({
+			type: 'portMouseOut',
+			data: {
+				nodeId: node._id,
+				portId: self._id,
+				x: e.clientX,
+				y: e.clientY,
+			}
+		});
 	}
 
 };

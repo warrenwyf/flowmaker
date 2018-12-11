@@ -38,7 +38,7 @@
 			type: 'output',
 		}],
 	});
-	node1.addToFlow(flow, 100, 100);
+	flow.addNode(node1, 100, 100);
 
 	var node2 = new flowmaker.Node({
 		name: 'Cache',
@@ -51,7 +51,7 @@
 			type: 'input',
 		}],
 	});
-	node2.addToFlow(flow, 400, 200);
+	flow.addNode(node2, 400, 200);
 
 	flow.connect(node1.getId(), 'r-0', node2.getId(), 'l-1');
 	</script>

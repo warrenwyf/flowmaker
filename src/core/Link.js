@@ -16,20 +16,15 @@ export default class Link {
 		self._toPortId = toPortId;
 	}
 
-	addToFlow(flow) {
+	_addToFlow(flow) {
 		let self = this;
 
-		if (!flow || !flow._nodes || !flow._graph) {
-			throw new Error(`Flow not found`);
-			return;
-		}
-
-		if (!!self._id) {
+		if (self._flow) {
 			throw new Error(`Link<${self._id}> is already in a flow`);
 			return;
 		}
 
-		let id = self._id = ++flow._idSeq;
+		let id = self._id = `${self._fromNodeId}:${self._fromPortId}-${self._toNodeId}:${self._toPortId}`;
 		flow._links[id] = self;
 
 		self._flow = flow;

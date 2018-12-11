@@ -37,32 +37,6 @@ export default class Node {
 		self._status = 'idle'; // idle | warn | error | success
 	}
 
-	addToFlow(flow, x, y) {
-		let self = this;
-
-		if (!flow || !flow._nodes || !flow._graph) {
-			throw new Error(`Flow not found`);
-			return;
-		}
-
-		if (!!self._id) {
-			throw new Error(`Node<${self._id}> is already in a flow`);
-			return;
-		}
-
-		let id = self._id = ++flow._idSeq;
-		flow._nodes[id] = self;
-
-		self._flow = flow;
-		self._x = x;
-		self._y = y;
-
-		self._initGraph();
-		self._updatePos();
-
-		return self;
-	}
-
 	getId() {
 		return this._id;
 	}
@@ -84,6 +58,27 @@ export default class Node {
 		self._updateSelected();
 	}
 
+	_addToFlow(flow, x, y) {
+		let self = this;
+
+		if (self._flow) {
+			throw new Error(`Node<${self._id}> is already in a flow`);
+			return;
+		}
+
+		let id = self._id = ++flow._idSeq;
+		flow._nodes[id] = self;
+
+		self._flow = flow;
+		self._x = x;
+		self._y = y;
+
+		self._initGraph();
+		self._updatePos();
+
+		return self;
+	}
+
 	_initGraph() {
 		let self = this;
 		let options = self._options;
@@ -95,7 +90,7 @@ export default class Node {
 		draggable.setAttribute('cursor', 'pointer');
 		draggable.addEventListener("mousedown", self._onMouseDown);
 		draggable.addEventListener("dblclick", self._onDoubleClick);
-		draggable._node = self;
+		draggable._obj = self;
 
 		// background
 		let bg = self._graphBg = DomUtil.createSVG('rect', 'fm-node-bg', draggable);
@@ -153,7 +148,7 @@ export default class Node {
 
 				let anchor = self._calcPortAnchor(portOptions, i, -options.bgSize / 2, sideLen, sideSpacing);
 				let port = new Port(portOptions);
-				port.addToNode(self, `l-${i}`, anchor);
+				port._addToNode(self, `l-${i}`, anchor);
 			}
 		}
 
@@ -166,7 +161,7 @@ export default class Node {
 
 				let anchor = self._calcPortAnchor(portOptions, i, options.bgSize / 2, sideLen, sideSpacing);
 				let port = new Port(portOptions);
-				port.addToNode(self, `r-${i}`, anchor);
+				port._addToNode(self, `r-${i}`, anchor);
 			}
 		}
 
@@ -217,7 +212,7 @@ export default class Node {
 	}
 
 	_onMouseDown(e) {
-		let self = this._node;
+		let self = this._obj;
 
 		let flowGraph = self._flow._graph;
 		flowGraph.addEventListener("mousemove", self._onMouseMove);
@@ -255,7 +250,7 @@ export default class Node {
 	}
 
 	_onDoubleClick(e) {
-		let self = this._node;
+		let self = this._obj;
 
 		self._selected = true;
 		self._updateSelected();
@@ -264,7 +259,7 @@ export default class Node {
 	}
 
 	_onPortMouseDown(e) {
-		let self = this._node;
+		let self = this._obj;
 
 		let flowGraph = self._flow._graph;
 		flowGraph.addEventListener("mousemove", self._onPortMouseMove);

@@ -1,6 +1,7 @@
 import DomUtil from '../util/DomUtil';
 import EventBus from './EventBus';
 import Link from './Link';
+import Temp from './Temp';
 
 export default class Flow extends EventBus {
 
@@ -15,20 +16,28 @@ export default class Flow extends EventBus {
 			return;
 		}
 
+		self._options = Object.assign({}, options);
+
 		self._idSeq = 1;
 		self._nodes = {};
 		self._links = {};
 
 		self._initGraph();
+		self._initListeners();
 
-		window.addEventListener("resize", function() {
-			self._updateSize();
-		});
+		let temp = new Temp();
+		temp._addToFlow(self);
+	}
+
+	addNode(node, x, y) {
+		node._addToFlow(this, x, y);
+
+		return node;
 	}
 
 	connect(fromNodeId, fromPortId, toNodeId, toPortId, options) {
 		let link = new Link(fromNodeId, fromPortId, toNodeId, toPortId, options);
-		link.addToFlow(this);
+		link._addToFlow(this);
 
 		return link;
 	}
@@ -61,6 +70,8 @@ export default class Flow extends EventBus {
 		g.setAttribute('width', '100%');
 		g.setAttribute('height', '100%');
 
+		g._obj = self;
+
 		self._updateSize();
 	}
 
@@ -73,6 +84,14 @@ export default class Flow extends EventBus {
 
 		let g = self._graph;
 		g.setAttribute('viewBox', [0, 0, w, h].join(' '));
+	}
+
+	_initListeners() {
+		let self = this;
+
+		window.addEventListener("resize", function() {
+			self._updateSize();
+		});
 	}
 
 };
