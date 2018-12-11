@@ -1,3 +1,4 @@
+const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
@@ -48,6 +49,10 @@ export default class DomUtil {
 		}
 
 		return element;
+	}
+
+	static createXhtml(tagName, className, parent) {
+		return this.createNS(XHTML_NS, tagName, className, parent);
 	}
 
 	static createSVG(tagName, className, parent) {
