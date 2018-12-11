@@ -1,8 +1,12 @@
 import DomUtil from '../util/DomUtil';
+import EventBus from './EventBus';
+import Link from './Link';
 
-export default class Flow {
+export default class Flow extends EventBus {
 
 	constructor(domId, options = {}) {
+		super();
+
 		let self = this;
 
 		let container = self._container = document.getElementById(domId);
@@ -13,6 +17,7 @@ export default class Flow {
 
 		self._idSeq = 1;
 		self._nodes = {};
+		self._links = {};
 
 		self._initGraph();
 
@@ -21,11 +26,27 @@ export default class Flow {
 		});
 	}
 
+	connect(fromNodeId, fromPortId, toNodeId, toPortId) {
+		let link = new Link(fromNodeId, fromPortId, toNodeId, toPortId);
+		link.addToFlow(this);
+
+		return link;
+	}
+
+	getNode(nodeId) {
+		return this._nodes[nodeId];
+	}
+
+	getLink(linkId) {
+		return this._links[linkId];
+	}
+
 	_initGraph() {
 		let self = this;
 
 		let container = self._container;
 		container.style.position = 'relative';
+		container.style.userSelect = 'none';
 
 		let g = self._graph = DomUtil.createSVG('svg', 'fm-flow', container);
 		g.setAttribute('shape-rendering', 'auto');

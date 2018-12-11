@@ -56,6 +56,17 @@ export default class Node {
 		return self;
 	}
 
+	getId() {
+		return this._id;
+	}
+
+	getPortAnchor(portId) {
+		let self = this;
+		let options = self._options;
+
+		return [self._x + options.bgSize / 2 + options.bgSize / 5, self._y];
+	}
+
 	_initGraph() {
 		let self = this;
 		let options = self._options;
@@ -177,6 +188,8 @@ export default class Node {
 		self._y = self._dragStartY + e.clientY - self._dragStartEvt.clientY;
 
 		self._updatePos();
+
+		self._flow.emit({ type: 'nodeMove' });
 	}
 
 	_onMouseUp(e) {

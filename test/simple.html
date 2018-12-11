@@ -32,10 +32,20 @@
 
 	var flow = new flowmaker.Flow('flow');
 
-	var node = new flowmaker.Node({
+	var node1 = new flowmaker.Node({
 		icon: 'img/icon-unknown.png',
 	});
-	node.addToFlow(flow, 100, 100);
+	node1.addToFlow(flow, 100, 100);
+
+	var node2 = new flowmaker.Node({
+		name: 'Cache',
+		desc: '',
+		icon: 'img/icon-cache.png',
+		bgColor: '#faa33e',
+	});
+	node2.addToFlow(flow, 400, 200);
+
+	flow.connect(node1.getId(), 0, node2.getId(), 0);
 	</script>
 
 </body>
