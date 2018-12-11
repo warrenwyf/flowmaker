@@ -28,12 +28,15 @@
 
 	<script type="text/javascript" src="../dist/flowmaker.js"></script>
 	<script type="text/javascript">
-	console.log('flowmaker version:', flowmaker.version)
+	console.log('flowmaker version:', flowmaker.version);
 
 	var flow = new flowmaker.Flow('flow');
 
 	var node1 = new flowmaker.Node({
 		icon: 'img/icon-unknown.png',
+		rightPorts: [{
+			type: 'output',
+		}],
 	});
 	node1.addToFlow(flow, 100, 100);
 
@@ -42,10 +45,15 @@
 		desc: '',
 		icon: 'img/icon-cache.png',
 		bgColor: '#faa33e',
+		leftPorts: [{
+			type: 'input',
+		}, {
+			type: 'input',
+		}],
 	});
 	node2.addToFlow(flow, 400, 200);
 
-	flow.connect(node1.getId(), 0, node2.getId(), 0);
+	flow.connect(node1.getId(), 'r-0', node2.getId(), 'l-1');
 	</script>
 
 </body>

@@ -26,8 +26,8 @@ export default class Flow extends EventBus {
 		});
 	}
 
-	connect(fromNodeId, fromPortId, toNodeId, toPortId) {
-		let link = new Link(fromNodeId, fromPortId, toNodeId, toPortId);
+	connect(fromNodeId, fromPortId, toNodeId, toPortId, options) {
+		let link = new Link(fromNodeId, fromPortId, toNodeId, toPortId, options);
 		link.addToFlow(this);
 
 		return link;

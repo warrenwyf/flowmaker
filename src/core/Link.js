@@ -60,9 +60,13 @@ export default class Link {
 		let flow = self._flow;
 
 		let fromNode = flow.getNode(self._fromNodeId);
-		let [fromX, fromY] = fromNode.getPortAnchor(self._fromPortId);
-
 		let toNode = flow.getNode(self._toNodeId);
+
+		if (!fromNode || !toNode) {
+			return;
+		}
+
+		let [fromX, fromY] = fromNode.getPortAnchor(self._fromPortId);
 		let [toX, toY] = toNode.getPortAnchor(self._toPortId);
 
 		let g = self._graph;

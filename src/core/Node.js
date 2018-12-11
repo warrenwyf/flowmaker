@@ -1,4 +1,5 @@
 import DomUtil from '../util/DomUtil';
+import Port from './Port';
 
 export default class Node {
 
@@ -6,6 +7,7 @@ export default class Node {
 		let self = this;
 
 		self._options = Object.assign({
+			extInfo: {}, // info for external reference
 			name: 'Unknown',
 			nameSize: '1em',
 			desc: 'an unknown node',
@@ -24,7 +26,12 @@ export default class Node {
 			warnColor: '#fbfb3d',
 			errorColor: '#f14f51',
 			successColor: '#6cc05d',
+			leftPorts: [],
+			rightPorts: [],
 		}, options);
+
+
+		self._ports = {}; // key is port id
 
 		self._progress = -1; // show progress bar when this value >= 0
 		self._status = 'idle'; // idle | warn | error | success
@@ -62,9 +69,19 @@ export default class Node {
 
 	getPortAnchor(portId) {
 		let self = this;
-		let options = self._options;
 
-		return [self._x + options.bgSize / 2 + options.bgSize / 5, self._y];
+		let port = self._ports[portId];
+		if (port) {
+			let anchor = port._anchor;
+			return [anchor[0] + self._x, anchor[1] + self._y];
+		}
+	}
+
+	unselect() {
+		let self = this;
+
+		self._selected = false;
+		self._updateSelected();
 	}
 
 	_initGraph() {
@@ -76,7 +93,8 @@ export default class Node {
 		// draggable graph, including background and icon
 		let draggable = self._graphDraggable = DomUtil.createSVG('g', 'fm-node-draggable', g);
 		draggable.setAttribute('cursor', 'pointer');
-		draggable.addEventListener("mousedown", self._onMouseDown, true);
+		draggable.addEventListener("mousedown", self._onMouseDown);
+		draggable.addEventListener("dblclick", self._onDoubleClick);
 		draggable._node = self;
 
 		// background
@@ -122,19 +140,35 @@ export default class Node {
 		desc.setAttribute('alignment-baseline', 'text-before-edge');
 		desc.setAttribute('cursor', 'default');
 
-		// in ports
-		let portIn = DomUtil.createSVG('polygon', 'fm-node-port-in', g);
-		portIn.setAttribute('points', `0 0 ${-options.bgSize / 5} ${-options.bgSize / 10} ${-options.bgSize / 5} ${options.bgSize / 10}`);
-		portIn.setAttribute('transform', `translate(${-options.bgSize / 2} 0)`);
-		portIn.setAttribute('fill', '#000');
-		portIn.setAttribute('fill-opacity', 1.0);
 
-		// out ports
-		let portOut = DomUtil.createSVG('polygon', 'fm-node-port-out', g);
-		portOut.setAttribute('points', `${options.bgSize / 5} 0 0 ${-options.bgSize / 10} 0 ${options.bgSize / 10}`);
-		portOut.setAttribute('transform', `translate(${options.bgSize / 2} 0)`);
-		portOut.setAttribute('fill', '#000');
-		portOut.setAttribute('fill-opacity', 1.0);
+		// used by ports
+		let sideLen = options.bgSize - 4 * options.bgRadius;
+
+		// left ports
+		let leftPortsCount = options.leftPorts.length;
+		if (leftPortsCount > 0) {
+			let sideSpacing = leftPortsCount == 1 ? 0 : sideLen / (leftPortsCount - 1);
+			for (let i = 0; i < leftPortsCount; i++) {
+				let portOptions = options.leftPorts[i];
+
+				let anchor = self._calcPortAnchor(portOptions, i, -options.bgSize / 2, sideLen, sideSpacing);
+				let port = new Port(portOptions);
+				port.addToNode(self, `l-${i}`, anchor);
+			}
+		}
+
+		// right ports
+		let rightPortsCount = options.rightPorts.length;
+		if (rightPortsCount > 0) {
+			let sideSpacing = rightPortsCount == 1 ? 0 : sideLen / (rightPortsCount - 1);
+			for (let i = 0; i < rightPortsCount; i++) {
+				let portOptions = options.rightPorts[i];
+
+				let anchor = self._calcPortAnchor(portOptions, i, options.bgSize / 2, sideLen, sideSpacing);
+				let port = new Port(portOptions);
+				port.addToNode(self, `r-${i}`, anchor);
+			}
+		}
 
 
 		// progress
@@ -163,6 +197,25 @@ export default class Node {
 		flow._graph.appendChild(g);
 	}
 
+	_calcPortAnchor(portOptions, sideIdx, sideX, sideLen, sideSpacing) {
+		let self = this;
+		let options = self._options;
+
+		let anchorX = sideX;
+		switch (portOptions.type) {
+			case 'input':
+				anchorX -= options.bgSize / 5;
+				break;
+			case 'output':
+				anchorX += options.bgSize / 5;
+				break;
+		}
+
+		let anchorY = sideSpacing ? -sideLen / 2 + sideSpacing * sideIdx : 0;
+
+		return [anchorX, anchorY];
+	}
+
 	_onMouseDown(e) {
 		let self = this._node;
 
@@ -189,7 +242,7 @@ export default class Node {
 
 		self._updatePos();
 
-		self._flow.emit({ type: 'nodeMove' });
+		self._flow.emit({ type: 'nodeMove', data: { id: self._id } });
 	}
 
 	_onMouseUp(e) {
@@ -199,6 +252,30 @@ export default class Node {
 		this.removeEventListener("mouseup", self._onMouseUp);
 
 		self._graphDraggable.setAttribute('cursor', 'pointer');
+	}
+
+	_onDoubleClick(e) {
+		let self = this._node;
+
+		self._selected = true;
+		self._updateSelected();
+
+		self._flow.emit({ type: 'nodeSelected', data: { id: self._id } });
+	}
+
+	_onPortMouseDown(e) {
+		let self = this._node;
+
+		let flowGraph = self._flow._graph;
+		flowGraph.addEventListener("mousemove", self._onPortMouseMove);
+		flowGraph.addEventListener("mouseup", self._onPortMouseUp);
+		flowGraph._draggingTarget = self;
+
+		self._dragStartX = self._x;
+		self._dragStartY = self._y;
+		self._dragStartEvt = e;
+
+		self._graphDraggable.setAttribute('cursor', 'move');
 	}
 
 	_updatePos() {
