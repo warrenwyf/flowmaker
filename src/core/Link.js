@@ -8,12 +8,17 @@ export default class Link {
 		self._options = Object.assign({
 			color: '#999',
 			width: 2,
+			selectedColor: '#000',
 		}, options);
 
 		self._fromNodeId = fromNodeId;
 		self._fromPortId = fromPortId;
 		self._toNodeId = toNodeId;
 		self._toPortId = toPortId;
+	}
+
+	unselect() {
+		this._updateSelected(false);
 	}
 
 	_addToFlow(flow) {
@@ -30,7 +35,7 @@ export default class Link {
 		self._flow = flow;
 
 		self._initGraph();
-		self._updateShape();
+		self._ensureShape();
 
 		self._initListeners();
 
@@ -42,15 +47,34 @@ export default class Link {
 		let options = self._options;
 
 		let g = self._graph = DomUtil.createSVG('path', 'fm-link');
+		g._obj = self;
+		g.setAttribute('cursor', 'pointer');
 		g.setAttribute('fill', 'none');
 		g.setAttribute('stroke', options.color);
 		g.setAttribute('stroke-width', options.width);
+		g.addEventListener("click", self._onGraphClick);
 
 		let flow = self._flow;
 		flow._graph.appendChild(g);
 	}
 
-	_updateShape() {
+	_onGraphClick(e) {
+		e.stopPropagation();
+
+		let self = this._obj;
+
+		self._updateSelected(true);
+
+		self._flow.emit({
+			type: 'objSelected',
+			data: {
+				type: 'link',
+				obj: self,
+			}
+		});
+	}
+
+	_ensureShape() {
 		let self = this;
 		let flow = self._flow;
 
@@ -74,6 +98,22 @@ export default class Link {
 			let midX2 = toX - dis;
 			let midY = (fromY + toY) / 2;
 			g.setAttribute('d', `M ${fromX},${fromY} Q ${midX1},${fromY} ${(midX1+midX2)/2},${midY} ${midX2},${toY} ${toX},${toY}`);
+		}
+	}
+
+	_updateSelected(flag) {
+		let self = this;
+
+		let options = self._options;
+		let g = self._graph;
+
+		self._selected = flag;
+		if (flag) {
+			g.setAttribute('stroke', options.selectedColor);
+			g.setAttribute('stroke-width', options.width * 1.5);
+		} else {
+			g.setAttribute('stroke', options.color);
+			g.setAttribute('stroke-width', options.width);
 		}
 	}
 
@@ -106,7 +146,7 @@ export default class Link {
 		// Update if the node is relative
 		let nodeId = e.data.id;
 		if (self._fromNodeId == nodeId || self._toNodeId == nodeId) {
-			self._updateShape();
+			self._ensureShape();
 		}
 	}
 

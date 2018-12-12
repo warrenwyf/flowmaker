@@ -55,7 +55,7 @@ export default class EventBus {
 		};
 
 		let allListeners = self[listenersKey] || {};
-		let listeners = allListeners[event.type];
+		let listeners = allListeners[event.type] || [];
 		let listener, callback;
 
 		for (let i = listeners.length - 1; i >= 0; i--) {

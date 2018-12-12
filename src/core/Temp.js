@@ -63,8 +63,8 @@ export default class Temp {
 		connectingGraph.setAttribute('stroke-dasharray', options.connectingDash);
 
 		let flowGraph = flow._graph;
-		flowGraph.addEventListener("mousemove", self._onConnectMove);
-		flowGraph.addEventListener("mouseup", self._onConnectEnd);
+		flowGraph.addEventListener("mousemove", self._onGraphMouseMove);
+		flowGraph.addEventListener("mouseup", self._onGraphMouseUp);
 
 		let { nodeId, portId, x, y } = e.data;
 		if (nodeId && portId) {
@@ -79,7 +79,7 @@ export default class Temp {
 		}
 	}
 
-	_onConnectMove(e) {
+	_onGraphMouseMove(e) {
 		e.stopPropagation();
 
 		let self = this._obj._temp;
@@ -100,7 +100,7 @@ export default class Temp {
 		connectingGraph.setAttribute('d', `M ${fromX},${fromY} L ${toX},${toY}`);
 	}
 
-	_onConnectEnd(e) {
+	_onGraphMouseUp(e) {
 		e.stopPropagation();
 
 		let self = this._obj._temp;
@@ -113,8 +113,8 @@ export default class Temp {
 		let flow = self._flow;
 
 		let flowGraph = flow._graph;
-		flowGraph.removeEventListener("mousemove", self._onConnectMove);
-		flowGraph.removeEventListener("mouseup", self._onConnectEnd);
+		flowGraph.removeEventListener("mousemove", self._onGraphMouseMove);
+		flowGraph.removeEventListener("mouseup", self._onGraphMouseUp);
 
 		self._connectingGraph.remove();
 		delete self._connectingGraph;

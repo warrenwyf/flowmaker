@@ -19,8 +19,7 @@ export default class Node {
 			bgOpacity: 0.8,
 			icon: '',
 			selectedColor: '#000',
-			selectedOpacity: 1.0,
-			selectedWidth: 1,
+			selectedWidth: 2,
 			statusColor: '#ccc',
 			idleColor: '#fff',
 			warnColor: '#fbfb3d',
@@ -56,10 +55,7 @@ export default class Node {
 	}
 
 	unselect() {
-		let self = this;
-
-		self._selected = false;
-		self._updateSelected();
+		this._updateSelected(false);
 	}
 
 	_addToFlow(flow, x, y) {
@@ -78,7 +74,9 @@ export default class Node {
 		self._y = y;
 
 		self._initGraph();
-		self._updatePos();
+		self._initListeners();
+
+		self._ensurePos();
 
 		return self;
 	}
@@ -91,10 +89,10 @@ export default class Node {
 
 		// draggable graph, including background and icon
 		let draggable = self._graphDraggable = DomUtil.createSVG('g', 'fm-node-draggable', g);
-		draggable.setAttribute('cursor', 'pointer');
-		draggable.addEventListener("mousedown", self._onMouseDown);
-		draggable.addEventListener("dblclick", self._onDoubleClick);
 		draggable._obj = self;
+		draggable.setAttribute('cursor', 'pointer');
+		draggable.addEventListener("mousedown", self._onGraphMouseDown);
+		draggable.addEventListener("click", self._onGraphClick);
 
 		// background
 		let bg = self._graphBg = DomUtil.createSVG('rect', 'fm-node-bg', draggable);
@@ -196,6 +194,11 @@ export default class Node {
 		flow._graph.appendChild(g);
 	}
 
+	_initListeners() {
+		let self = this;
+		let flow = this._flow;
+	}
+
 	_snapToGrid(gridSize) {
 		let self = this;
 
@@ -208,7 +211,7 @@ export default class Node {
 		if (modX !== 0 || modY !== 0) {
 			self._x = oldX - modX;
 			self._y = oldY - modY;
-			self._updatePos();
+			self._ensurePos();
 
 			self._flow.emit({ type: 'nodeMove', data: { id: self._id } });
 		}
@@ -233,14 +236,19 @@ export default class Node {
 		return [anchorX, anchorY];
 	}
 
-	_onMouseDown(e) {
+	_onGraphMouseDown(e) {
 		e.stopPropagation();
+
+		// allow left mouse
+		if (e.which !== 1) {
+			return;
+		}
 
 		let self = this._obj;
 
 		let flowGraph = self._flow._graph;
-		flowGraph.addEventListener("mousemove", self._onMouseMove);
-		flowGraph.addEventListener("mouseup", self._onMouseUp);
+		flowGraph.addEventListener("mousemove", self._onGraphMouseMove);
+		flowGraph.addEventListener("mouseup", self._onGraphMouseUp);
 		flowGraph._draggingTarget = self;
 
 		self._dragStartX = self._x;
@@ -250,7 +258,7 @@ export default class Node {
 		self._graphDraggable.setAttribute('cursor', 'move');
 	}
 
-	_onMouseMove(e) {
+	_onGraphMouseMove(e) {
 		e.stopPropagation();
 
 		let self = this._draggingTarget;
@@ -258,29 +266,36 @@ export default class Node {
 		self._x = self._dragStartX + e.clientX - self._dragStartEvent.clientX;
 		self._y = self._dragStartY + e.clientY - self._dragStartEvent.clientY;
 
-		self._updatePos();
+		self._ensurePos();
 
 		self._flow.emit({ type: 'nodeMove', data: { id: self._id } });
 	}
 
-	_onMouseUp(e) {
+	_onGraphMouseUp(e) {
 		e.stopPropagation();
 
 		let self = this._draggingTarget;
 
-		this.removeEventListener("mousemove", self._onMouseMove);
-		this.removeEventListener("mouseup", self._onMouseUp);
+		this.removeEventListener("mousemove", self._onGraphMouseMove);
+		this.removeEventListener("mouseup", self._onGraphMouseUp);
 
 		self._graphDraggable.setAttribute('cursor', 'pointer');
 	}
 
-	_onDoubleClick(e) {
+	_onGraphClick(e) {
+		e.stopPropagation();
+
 		let self = this._obj;
 
-		self._selected = true;
-		self._updateSelected();
+		self._updateSelected(true);
 
-		self._flow.emit({ type: 'nodeSelected', data: { id: self._id } });
+		self._flow.emit({
+			type: 'objSelected',
+			data: {
+				type: 'node',
+				obj: self,
+			}
+		});
 	}
 
 	_onPortMouseDown(e) {
@@ -298,30 +313,31 @@ export default class Node {
 		self._graphDraggable.setAttribute('cursor', 'move');
 	}
 
-	_updatePos() {
+	_ensurePos() {
 		let self = this;
 
 		let g = self._graph;
 		g.setAttribute('transform', `translate(${self._x} ${self._y})`);
 	}
 
-	_updateProgress() {
+	_updateProgress(v) {
 		let self = this;
 
-		let v = self._progress;
+		self._progress = v;
 
 		let x = self._graphProgress._xhtml;
 		x.setAttribute('value', `${v}`);
 		x.style.display = v >= 0 ? 'block' : 'none';
 	}
 
-	_updateStatus() {
+	_updateStatus(status) {
 		let self = this;
-
 		let options = self._options;
 
+		self._status = status;
+
 		let color = options.idleColor;
-		switch (self._status) {
+		switch (status) {
 			case 'warn':
 				color = options.warnColor;
 				break;
@@ -335,15 +351,15 @@ export default class Node {
 		self._graphStatus.setAttribute('fill', color);
 	}
 
-	_updateSelected() {
+	_updateSelected(flag) {
 		let self = this;
 
 		let options = self._options;
 		let bg = self._graphBg;
 
-		if (self._selected) {
+		self._selected = flag;
+		if (flag) {
 			bg.setAttribute('stroke', options.selectedColor);
-			bg.setAttribute('stroke-opacity', options.selectedOpacity);
 			bg.setAttribute('stroke-width', options.selectedWidth);
 		} else {
 			bg.setAttribute('stroke', 'none');

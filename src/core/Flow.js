@@ -29,7 +29,7 @@ export default class Flow extends EventBus {
 		self._initGraph();
 		self._initListeners();
 
-		self._updateSizeAndPos();
+		self._ensureSizeAndPos();
 
 		let temp = new Temp();
 		temp._addToFlow(self);
@@ -93,6 +93,7 @@ export default class Flow extends EventBus {
 		container.style.userSelect = 'none';
 
 		let g = self._graph = DomUtil.createSVG('svg', 'fm-flow', container);
+		g._obj = self;
 		g.setAttribute('shape-rendering', 'auto');
 		g.setAttribute('text-rendering', 'auto');
 		g.setAttribute('color-rendering', 'auto');
@@ -104,11 +105,9 @@ export default class Flow extends EventBus {
 		g.setAttribute('stroke-linejoin', 'round');
 		g.setAttribute('width', '100%');
 		g.setAttribute('height', '100%');
-
-		g._obj = self;
 	}
 
-	_updateSizeAndPos() {
+	_ensureSizeAndPos() {
 		let self = this;
 
 		let container = self._container;
@@ -127,17 +126,25 @@ export default class Flow extends EventBus {
 		});
 
 		let g = self._graph;
-		g.addEventListener("mousedown", self._onMouseDown);
+		g.addEventListener("mousedown", self._onGraphMouseDown);
+		g.addEventListener("click", self._onGraphClick);
+
+		self.on('objSelected', self._onObjSelected);
 	}
 
-	_onMouseDown(e) {
+	_onGraphMouseDown(e) {
 		e.stopPropagation();
+
+		// allow left mouse
+		if (e.which !== 1) {
+			return;
+		}
 
 		let self = this._obj;
 
 		let g = self._graph;
-		g.addEventListener("mousemove", self._onMouseMove);
-		g.addEventListener("mouseup", self._onMouseUp);
+		g.addEventListener("mousemove", self._onGraphMouseMove);
+		g.addEventListener("mouseup", self._onGraphMouseUp);
 
 		self._dragStartX = self._x;
 		self._dragStartY = self._y;
@@ -146,7 +153,7 @@ export default class Flow extends EventBus {
 		g.setAttribute('cursor', 'move');
 	}
 
-	_onMouseMove(e) {
+	_onGraphMouseMove(e) {
 		e.stopPropagation();
 
 		let self = this._obj;
@@ -154,18 +161,45 @@ export default class Flow extends EventBus {
 		self._x = self._dragStartX + e.clientX - self._dragStartEvent.clientX;
 		self._y = self._dragStartY + e.clientY - self._dragStartEvent.clientY;
 
-		self._updateSizeAndPos();
+		self._ensureSizeAndPos();
 	}
 
-	_onMouseUp(e) {
+	_onGraphMouseUp(e) {
 		e.stopPropagation();
 
 		let self = this._obj;
 
-		this.removeEventListener("mousemove", self._onMouseMove);
-		this.removeEventListener("mouseup", self._onMouseUp);
+		this.removeEventListener("mousemove", self._onGraphMouseMove);
+		this.removeEventListener("mouseup", self._onGraphMouseUp);
 
 		self._graph.setAttribute('cursor', 'default');
+	}
+
+	_onGraphClick(e) {
+		e.stopPropagation();
+
+		let self = this._obj;
+
+		self.emit({
+			type: 'objSelected',
+			data: {}
+		});
+	}
+
+	_onObjSelected(e) {
+		let self = this;
+
+		let newObj = e.data.obj;
+		let selectedObj = self._selectedObj;
+
+		let needUnselect = selectedObj && (newObj != selectedObj);
+		if (needUnselect) { // Unselect previous object
+			if (selectedObj.unselect instanceof Function) {
+				selectedObj.unselect();
+			}
+		}
+
+		self._selectedObj = newObj;
 	}
 
 };
