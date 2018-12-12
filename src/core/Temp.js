@@ -50,6 +50,7 @@ export default class Temp {
 
 	_onConnectStart(e) {
 		let self = this;
+		let flow = self._flow;
 
 		let options = self._options;
 		let g = self._graph;
@@ -60,17 +61,31 @@ export default class Temp {
 		connectingGraph.setAttribute('stroke-width', 2);
 		connectingGraph.setAttribute('stroke-dasharray', options.connectingDash);
 
-		let flowGraph = self._flow._graph;
+		let flowGraph = flow._graph;
 		flowGraph.addEventListener("mousemove", self._onConnectMove);
 		flowGraph.addEventListener("mouseup", self._onConnectEnd);
 
-		self._connectStartEvent = e;
+		let { nodeId, portId, x, y } = e.data;
+		if (nodeId && portId) {
+			let node = flow.getNode(nodeId);
+			let anchor = node && node.getPortAnchor(portId);
+			self._connectStartData = {
+				nodeId,
+				portId,
+				x: anchor ? anchor[0] : x,
+				y: anchor ? anchor[1] : y,
+			};
+		}
 	}
 
 	_onConnectMove(e) {
 		let self = this._obj._temp;
 
-		let startData = self._connectStartEvent.data;
+		let startData = self._connectStartData;
+		if (!startData) {
+			return;
+		}
+
 		let fromX = startData.x;
 		let fromY = startData.y;
 
@@ -83,37 +98,45 @@ export default class Temp {
 
 	_onConnectEnd(e) {
 		let self = this._obj._temp;
-		let g = self._graph;
 
-		let flowGraph = self._flow._graph;
+		let startData = self._connectStartData;
+		if (!startData) {
+			return;
+		}
+
+		let flow = self._flow;
+
+		let flowGraph = flow._graph;
 		flowGraph.removeEventListener("mousemove", self._onConnectMove);
 		flowGraph.removeEventListener("mouseup", self._onConnectEnd);
 
 		self._connectingGraph.remove();
 		delete self._connectingGraph;
-		delete self._connectStartEvent;
 
-		let overEvt = self._connectOverEvent;
-		if (overEvt) {
-			let nodeId = overEvt.data.nodeId;
-			let portId = overEvt.data.portId;
-			console.log(nodeId, portId)
+		let overEvent = self._connectOverEvent;
+		if (overEvent) {
+			let fromNodeId = startData.nodeId;
+			let fromPortId = startData.portId;
+			let toNodeId = overEvent.data.nodeId;
+			let toPortId = overEvent.data.portId;
+
+			flow.connect(fromNodeId, fromPortId, toNodeId, toPortId);
 		}
+
+		delete self._connectStartData;
 	}
 
 	_onOverPort(e) {
 		let self = this;
 		let g = self._graph;
 
-		if (self._connectStartEvent) { // tring connect port
+		if (self._connectStartData) { // tring connect port
 			self._connectOverEvent = e;
 
-			console.log(e)
-
-			// test connectable
+			// TODO: test connectable
 			if (e) {
 				let connectingGraph = self._connectingGraph;
-				connectingGraph.setAttribute('stroke-dasharray', '');
+				connectingGraph && connectingGraph.setAttribute('stroke-dasharray', '');
 			}
 		}
 	}
@@ -122,8 +145,8 @@ export default class Temp {
 		let self = this;
 		let g = self._graph;
 
-		let overEvt = self._connectOverEvent;
-		if (overEvt && overEvt.data.nodeId == e.data.nodeId && overEvt.data.portId == e.data.portId) {
+		let overEvent = self._connectOverEvent;
+		if (overEvent && overEvent.data.nodeId == e.data.nodeId && overEvent.data.portId == e.data.portId) {
 			delete self._connectOverEvent;
 
 			let options = self._options;
