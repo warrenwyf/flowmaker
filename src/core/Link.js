@@ -82,6 +82,21 @@ export default class Link {
 		let flow = self._flow;
 
 		flow.on('nodeMove', self._onNodeMove, self);
+		flow.on('linkEstablished', self._onLinkEstablished, self);
+	}
+
+	_remove() {
+		let self = this;
+		let flow = self._flow;
+
+		// remove listeners
+		flow.off('nodeMove', self._onNodeMove, self);
+		flow.off('linkEstablished', self._onLinkEstablished, self);
+
+		// remove graph
+		self._graph.remove();
+
+		delete flow._links[self._id];
 	}
 
 	_onNodeMove(e) {
@@ -92,6 +107,24 @@ export default class Link {
 		let nodeId = e.data.id;
 		if (self._fromNodeId == nodeId || self._toNodeId == nodeId) {
 			self._updateShape();
+		}
+	}
+
+	_onLinkEstablished(e) {
+		let self = this;
+		let flow = self._flow;
+
+		let {
+			id,
+			fromNodeId,
+			fromPortId,
+			toNodeId,
+			toPortId
+		} = e.data;
+
+		// remove unavailable links
+		if (self._id != id && self._toNodeId == toNodeId && self._toPortId == toPortId) { // only one Link is allowed to connect to a port
+			self._remove();
 		}
 	}
 

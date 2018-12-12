@@ -58,6 +58,17 @@ export default class Flow extends EventBus {
 		let link = new Link(fromNodeId, fromPortId, toNodeId, toPortId, options);
 		link._addToFlow(self);
 
+		self.emit({
+			type: 'linkEstablished',
+			data: {
+				id: link._id,
+				fromNodeId,
+				fromPortId,
+				toNodeId,
+				toPortId,
+			}
+		});
+
 		return link;
 	}
 
