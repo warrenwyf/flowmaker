@@ -238,8 +238,11 @@ export default class Node {
 		let modY = oldY % gridSize;
 
 		if (modX !== 0 || modY !== 0) {
-			self._x = oldX - modX;
-			self._y = oldY - modY;
+			let dx = modX < (gridSize - modX) ? -modX : gridSize - modX;
+			let dy = modY < (gridSize - modY) ? -modY : gridSize - modY;
+
+			self._x = oldX + dx;
+			self._y = oldY + dy;
 			self._ensurePos();
 
 			self._flow.emit({ type: 'nodeMove', data: { id: self._id } });
