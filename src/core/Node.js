@@ -155,12 +155,12 @@ export default class Node {
 		// icon
 		if (options.icon) {
 			let icon = self._graphIcon = DomUtil.createSVG('image', 'fm-node-icon', draggable);
-			icon.setAttribute('href', options.icon);
 			icon.setAttribute('x', options.bgRadius - options.bgSize / 2);
 			icon.setAttribute('y', options.bgRadius - options.bgSize / 2);
 			icon.setAttribute('width', options.bgSize - 2 * options.bgRadius);
 			icon.setAttribute('height', options.bgSize - 2 * options.bgRadius);
 			icon.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+			DomUtil.setAttributeXlink(icon, 'href', options.icon);
 		}
 
 		// name

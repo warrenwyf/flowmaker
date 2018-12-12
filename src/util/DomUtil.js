@@ -99,6 +99,10 @@ export default class DomUtil {
 		return this.createNS(SVG_NS, tagName, className, parent);
 	}
 
+	static setAttributeXlink(element, name, value) {
+		return element.setAttributeNS(XLINK_NS, name, value);
+	}
+
 	static svgImagePattern(defs, imageSrc, imageWidth, imageHeight) {
 		let self = this;
 
