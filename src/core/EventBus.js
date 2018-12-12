@@ -1,4 +1,4 @@
-const listenersKey = '__fm_listeners__';
+const LISTENERS_KEY = '__fm_listeners__';
 
 export default class EventBus {
 
@@ -10,7 +10,7 @@ export default class EventBus {
 			context: context || self,
 		};
 
-		let allListeners = self[listenersKey] = self[listenersKey] || {};
+		let allListeners = self[LISTENERS_KEY] = self[LISTENERS_KEY] || {};
 		allListeners[type] = allListeners[type] || [];
 		allListeners[type].push(listener);
 
@@ -20,7 +20,7 @@ export default class EventBus {
 	off(type, callback, context) {
 		let self = this;
 
-		let allListeners = self[listenersKey];
+		let allListeners = self[LISTENERS_KEY];
 		if (!allListeners) {
 			return self;
 		}
@@ -54,7 +54,7 @@ export default class EventBus {
 			return this;
 		};
 
-		let allListeners = self[listenersKey] || {};
+		let allListeners = self[LISTENERS_KEY] || {};
 		let listeners = allListeners[event.type] || [];
 		let listener, callback;
 

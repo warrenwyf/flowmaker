@@ -58,6 +58,10 @@ export default class Node {
 		this._updateSelected(false);
 	}
 
+	remove() {
+		this._remove();
+	}
+
 	_addToFlow(flow, x, y) {
 		let self = this;
 
@@ -74,11 +78,28 @@ export default class Node {
 		self._y = y;
 
 		self._initGraph();
-		self._initListeners();
+		self._addListeners();
 
 		self._ensurePos();
 
 		return self;
+	}
+
+	_remove() {
+		let self = this;
+		let flow = self._flow;
+
+		self._removeListeners();
+		self._graph.remove();
+
+		delete flow._nodes[self._id];
+
+		self._flow.emit({
+			type: 'nodeRemoved',
+			data: {
+				obj: self,
+			}
+		});
 	}
 
 	_initGraph() {
@@ -89,10 +110,7 @@ export default class Node {
 
 		// draggable graph, including background and icon
 		let draggable = self._graphDraggable = DomUtil.createSVG('g', 'fm-node-draggable', g);
-		draggable._obj = self;
 		draggable.setAttribute('cursor', 'pointer');
-		draggable.addEventListener("mousedown", self._onGraphMouseDown);
-		draggable.addEventListener("click", self._onGraphClick);
 
 		// background
 		let bg = self._graphBg = DomUtil.createSVG('rect', 'fm-node-bg', draggable);
@@ -194,9 +212,20 @@ export default class Node {
 		flow._graph.appendChild(g);
 	}
 
-	_initListeners() {
+	_addListeners() {
 		let self = this;
-		let flow = this._flow;
+
+		let g = self._graphDraggable;
+		DomUtil.addListener(g, 'mousedown', self._onGraphMouseDown, self);
+		DomUtil.addListener(g, 'click', self._onGraphClick, self);
+	}
+
+	_removeListeners() {
+		let self = this;
+
+		let g = self._graphDraggable;
+		DomUtil.removeListener(g, 'mousedown', self._onGraphMouseDown, self);
+		DomUtil.removeListener(g, 'click', self._onGraphClick, self);
 	}
 
 	_snapToGrid(gridSize) {
@@ -244,12 +273,11 @@ export default class Node {
 			return;
 		}
 
-		let self = this._obj;
+		let self = this;
 
-		let flowGraph = self._flow._graph;
-		flowGraph.addEventListener("mousemove", self._onGraphMouseMove);
-		flowGraph.addEventListener("mouseup", self._onGraphMouseUp);
-		flowGraph._draggingTarget = self;
+		let g = self._flow._graph;
+		DomUtil.addListener(g, 'mousemove', self._onGraphMouseMove, self);
+		DomUtil.addListener(g, 'mouseup', self._onGraphMouseUp, self);
 
 		self._dragStartX = self._x;
 		self._dragStartY = self._y;
@@ -261,7 +289,7 @@ export default class Node {
 	_onGraphMouseMove(e) {
 		e.stopPropagation();
 
-		let self = this._draggingTarget;
+		let self = this;
 
 		self._x = self._dragStartX + e.clientX - self._dragStartEvent.clientX;
 		self._y = self._dragStartY + e.clientY - self._dragStartEvent.clientY;
@@ -274,10 +302,11 @@ export default class Node {
 	_onGraphMouseUp(e) {
 		e.stopPropagation();
 
-		let self = this._draggingTarget;
+		let self = this;
 
-		this.removeEventListener("mousemove", self._onGraphMouseMove);
-		this.removeEventListener("mouseup", self._onGraphMouseUp);
+		let g = self._flow._graph;
+		DomUtil.removeListener(g, 'mousemove', self._onGraphMouseMove, self);
+		DomUtil.removeListener(g, 'mouseup', self._onGraphMouseUp, self);
 
 		self._graphDraggable.setAttribute('cursor', 'pointer');
 	}
@@ -285,26 +314,25 @@ export default class Node {
 	_onGraphClick(e) {
 		e.stopPropagation();
 
-		let self = this._obj;
+		let self = this;
 
 		self._updateSelected(true);
 
 		self._flow.emit({
 			type: 'objSelected',
 			data: {
-				type: 'node',
+				cls: 'Node',
 				obj: self,
 			}
 		});
 	}
 
 	_onPortMouseDown(e) {
-		let self = this._obj;
+		let self = this;
 
-		let flowGraph = self._flow._graph;
-		flowGraph.addEventListener("mousemove", self._onPortMouseMove);
-		flowGraph.addEventListener("mouseup", self._onPortMouseUp);
-		flowGraph._draggingTarget = self;
+		let g = self._flow._graph;
+		DomUtil.addListener(g, 'mousemove', self._onPortMouseMove, self);
+		DomUtil.addListener(g, 'mouseup', self._onPortMouseUp, self);
 
 		self._dragStartX = self._x;
 		self._dragStartY = self._y;

@@ -25,7 +25,7 @@ export default class Temp {
 		self._flow = flow;
 
 		self._initGraph();
-		self._initListeners();
+		self._addListeners();
 
 		return self;
 	}
@@ -36,11 +36,9 @@ export default class Temp {
 
 		let flow = self._flow;
 		let g = self._graph = DomUtil.createSVG('g', 'fm-temp', flow._graph);
-
-		g._obj = self;
 	}
 
-	_initListeners() {
+	_addListeners() {
 		let self = this;
 		let flow = self._flow;
 
@@ -63,8 +61,8 @@ export default class Temp {
 		connectingGraph.setAttribute('stroke-dasharray', options.connectingDash);
 
 		let flowGraph = flow._graph;
-		flowGraph.addEventListener("mousemove", self._onGraphMouseMove);
-		flowGraph.addEventListener("mouseup", self._onGraphMouseUp);
+		DomUtil.addListener(flowGraph, 'mousemove', self._onFlowGraphMouseMove, self);
+		DomUtil.addListener(flowGraph, 'mouseup', self._onFlowGraphMouseUp, self);
 
 		let { nodeId, portId, x, y } = e.data;
 		if (nodeId && portId) {
@@ -79,10 +77,10 @@ export default class Temp {
 		}
 	}
 
-	_onGraphMouseMove(e) {
+	_onFlowGraphMouseMove(e) {
 		e.stopPropagation();
 
-		let self = this._obj._temp;
+		let self = this;
 
 		let startData = self._connectStartData;
 		if (!startData) {
@@ -100,10 +98,10 @@ export default class Temp {
 		connectingGraph.setAttribute('d', `M ${fromX},${fromY} L ${toX},${toY}`);
 	}
 
-	_onGraphMouseUp(e) {
+	_onFlowGraphMouseUp(e) {
 		e.stopPropagation();
 
-		let self = this._obj._temp;
+		let self = this;
 
 		let startData = self._connectStartData;
 		if (!startData) {
@@ -113,8 +111,8 @@ export default class Temp {
 		let flow = self._flow;
 
 		let flowGraph = flow._graph;
-		flowGraph.removeEventListener("mousemove", self._onGraphMouseMove);
-		flowGraph.removeEventListener("mouseup", self._onGraphMouseUp);
+		DomUtil.removeListener(flowGraph, 'mousemove', self._onFlowGraphMouseMove, self);
+		DomUtil.removeListener(flowGraph, 'mouseup', self._onFlowGraphMouseUp, self);
 
 		self._connectingGraph.remove();
 		delete self._connectingGraph;

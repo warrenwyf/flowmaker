@@ -17,7 +17,9 @@ export default class Flow extends EventBus {
 			return;
 		}
 
-		self._options = Object.assign({}, options);
+		self._options = Object.assign({
+			fontSize: 12,
+		}, options);
 
 		self._x = 0;
 		self._y = 0;
@@ -35,7 +37,7 @@ export default class Flow extends EventBus {
 		temp._addToFlow(self);
 	}
 
-	snapToGrid(gridSize) {
+	snapToGrid(gridSize = 8) {
 		let self = this;
 
 		if (gridSize > 0) {
@@ -87,24 +89,24 @@ export default class Flow extends EventBus {
 
 	_initGraph() {
 		let self = this;
+		let options = self._options;
 
 		let container = self._container;
 		container.style.position = 'relative';
 		container.style.userSelect = 'none';
 
 		let g = self._graph = DomUtil.createSVG('svg', 'fm-flow', container);
-		g._obj = self;
 		g.setAttribute('shape-rendering', 'auto');
 		g.setAttribute('text-rendering', 'auto');
 		g.setAttribute('color-rendering', 'auto');
 		g.setAttribute('image-rendering', 'auto');
 		g.setAttribute('color-interpolation', 'auto');
 		g.setAttribute('preserveAspectRatio', 'none');
-		g.setAttribute('font-size', '12');
-		g.setAttribute('stroke-linecap', 'round');
+		g.setAttribute('stroke-linecap', 'butt');
 		g.setAttribute('stroke-linejoin', 'round');
 		g.setAttribute('width', '100%');
 		g.setAttribute('height', '100%');
+		g.setAttribute('font-size', options.fontSize);
 	}
 
 	_ensureSizeAndPos() {
@@ -121,15 +123,33 @@ export default class Flow extends EventBus {
 	_initListeners() {
 		let self = this;
 
-		window.addEventListener("resize", function() {
-			self._updateSize();
-		});
+		DomUtil.addListener(window, 'resize', self._onWindowResize, self);
+		DomUtil.addListener(window, 'keydown', self._onWindowKeyDown, self);
 
 		let g = self._graph;
-		g.addEventListener("mousedown", self._onGraphMouseDown);
-		g.addEventListener("click", self._onGraphClick);
+		DomUtil.addListener(g, 'mousedown', self._onGraphMouseDown, self);
+		DomUtil.addListener(g, 'click', self._onGraphClick, self);
 
 		self.on('objSelected', self._onObjSelected);
+	}
+
+	_onWindowResize(e) {
+		this._ensureSizeAndPos();
+	}
+
+	_onWindowKeyDown(e) {
+		let self = this;
+
+		if (e.which == 8 /*Backspace*/ || e.which == 46 /*Del*/ ) {
+			let selectedObj = self._selectedObj;
+			if (selectedObj) {
+				if (selectedObj.remove instanceof Function) {
+					selectedObj.remove();
+				}
+
+				delete self._selectedObj;
+			}
+		}
 	}
 
 	_onGraphMouseDown(e) {
@@ -140,11 +160,11 @@ export default class Flow extends EventBus {
 			return;
 		}
 
-		let self = this._obj;
+		let self = this;
 
 		let g = self._graph;
-		g.addEventListener("mousemove", self._onGraphMouseMove);
-		g.addEventListener("mouseup", self._onGraphMouseUp);
+		DomUtil.addListener(g, 'mousemove', self._onGraphMouseMove, self);
+		DomUtil.addListener(g, 'mouseup', self._onGraphMouseUp, self);
 
 		self._dragStartX = self._x;
 		self._dragStartY = self._y;
@@ -156,7 +176,7 @@ export default class Flow extends EventBus {
 	_onGraphMouseMove(e) {
 		e.stopPropagation();
 
-		let self = this._obj;
+		let self = this;
 
 		self._x = self._dragStartX + e.clientX - self._dragStartEvent.clientX;
 		self._y = self._dragStartY + e.clientY - self._dragStartEvent.clientY;
@@ -167,10 +187,11 @@ export default class Flow extends EventBus {
 	_onGraphMouseUp(e) {
 		e.stopPropagation();
 
-		let self = this._obj;
+		let self = this;
 
-		this.removeEventListener("mousemove", self._onGraphMouseMove);
-		this.removeEventListener("mouseup", self._onGraphMouseUp);
+		let g = self._graph;
+		DomUtil.removeListener(g, 'mousemove', self._onGraphMouseMove, self);
+		DomUtil.removeListener(g, 'mouseup', self._onGraphMouseUp, self);
 
 		self._graph.setAttribute('cursor', 'default');
 	}
@@ -178,7 +199,7 @@ export default class Flow extends EventBus {
 	_onGraphClick(e) {
 		e.stopPropagation();
 
-		let self = this._obj;
+		let self = this;
 
 		self.emit({
 			type: 'objSelected',

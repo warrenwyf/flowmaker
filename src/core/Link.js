@@ -21,6 +21,10 @@ export default class Link {
 		this._updateSelected(false);
 	}
 
+	remove() {
+		this._remove();
+	}
+
 	_addToFlow(flow) {
 		let self = this;
 
@@ -35,11 +39,28 @@ export default class Link {
 		self._flow = flow;
 
 		self._initGraph();
+		self._addListeners();
+
 		self._ensureShape();
 
-		self._initListeners();
-
 		return self;
+	}
+
+	_remove() {
+		let self = this;
+		let flow = self._flow;
+
+		self._removeListeners();
+		self._graph.remove();
+
+		delete flow._links[self._id];
+
+		self._flow.emit({
+			type: 'linkRemoved',
+			data: {
+				obj: self,
+			}
+		});
 	}
 
 	_initGraph() {
@@ -47,12 +68,10 @@ export default class Link {
 		let options = self._options;
 
 		let g = self._graph = DomUtil.createSVG('path', 'fm-link');
-		g._obj = self;
 		g.setAttribute('cursor', 'pointer');
 		g.setAttribute('fill', 'none');
 		g.setAttribute('stroke', options.color);
 		g.setAttribute('stroke-width', options.width);
-		g.addEventListener("click", self._onGraphClick);
 
 		let flow = self._flow;
 		flow._graph.appendChild(g);
@@ -61,14 +80,14 @@ export default class Link {
 	_onGraphClick(e) {
 		e.stopPropagation();
 
-		let self = this._obj;
+		let self = this;
 
 		self._updateSelected(true);
 
 		self._flow.emit({
 			type: 'objSelected',
 			data: {
-				type: 'link',
+				cls: 'Link',
 				obj: self,
 			}
 		});
@@ -117,26 +136,27 @@ export default class Link {
 		}
 	}
 
-	_initListeners() {
+	_addListeners() {
 		let self = this;
-		let flow = self._flow;
 
+		let g = self._graph;
+		DomUtil.addListener(g, 'click', self._onGraphClick, self);
+
+		let flow = self._flow;
 		flow.on('nodeMove', self._onNodeMove, self);
 		flow.on('linkEstablished', self._onLinkEstablished, self);
+		flow.on('nodeRemoved', self._onNodeRemoved, self);
 	}
 
-	_remove() {
+	_removeListeners() {
 		let self = this;
-		let flow = self._flow;
 
-		// remove listeners
+		let g = self._graph;
+		DomUtil.removeListener(g, 'click', self._onGraphClick, self);
+
+		let flow = self._flow;
 		flow.off('nodeMove', self._onNodeMove, self);
 		flow.off('linkEstablished', self._onLinkEstablished, self);
-
-		// remove graph
-		self._graph.remove();
-
-		delete flow._links[self._id];
 	}
 
 	_onNodeMove(e) {
@@ -165,6 +185,23 @@ export default class Link {
 		// remove unavailable links
 		if (self._id != id && self._toNodeId == toNodeId && self._toPortId == toPortId) { // only one Link is allowed to connect to a port
 			self._remove();
+		}
+	}
+
+	_onNodeRemoved(e) { // related Links should be removed too
+		let self = this;
+
+		let node = e.data.obj;
+
+		if (node._id != self._toNodeId) {
+			return;
+		}
+
+		for (let portId in node._ports) {
+			if (portId === self._toPortId) {
+				self._remove();
+				return;
+			}
 		}
 	}
 

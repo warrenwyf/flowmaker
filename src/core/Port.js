@@ -32,6 +32,7 @@ export default class Port {
 		self._anchor = anchor;
 
 		self._initGraph();
+		self._addListeners();
 
 		return self;
 	}
@@ -43,8 +44,7 @@ export default class Port {
 
 		let nodeGraph = self._node._graph;
 
-		let g = DomUtil.createSVG('polygon', 'fm-node-port', nodeGraph);
-		g._obj = self;
+		let g = self._graph = DomUtil.createSVG('polygon', 'fm-node-port', nodeGraph);
 
 		switch (options.type) {
 			case 'input':
@@ -65,10 +65,16 @@ export default class Port {
 			g.setAttribute('stroke', options.borderColor);
 			g.setAttribute('stroke-width', options.borderWidth);
 		}
+	}
 
-		g.addEventListener("mousedown", self._onGraphMouseDown);
-		g.addEventListener("mouseover", self._onGraphMouseOver);
-		g.addEventListener("mouseout", self._onGraphMouseOut);
+	_addListeners() {
+		let self = this;
+
+		let g = self._graph;
+
+		DomUtil.addListener(g, 'mousedown', self._onGraphMouseDown, self);
+		DomUtil.addListener(g, 'mouseover', self._onGraphMouseOver, self);
+		DomUtil.addListener(g, 'mouseout', self._onGraphMouseOut, self);
 	}
 
 	_onGraphMouseDown(e) {
@@ -79,7 +85,7 @@ export default class Port {
 			return;
 		}
 
-		let self = this._obj;
+		let self = this;
 		let node = self._node;
 
 		if (self._options.type == 'input') {
@@ -100,7 +106,7 @@ export default class Port {
 	_onGraphMouseOver(e) {
 		e.stopPropagation();
 
-		let self = this._obj;
+		let self = this;
 		let node = self._node;
 
 		node._flow.emit({
@@ -114,10 +120,10 @@ export default class Port {
 		});
 	}
 
-	_onMouGraphseOut(e) {
+	_onGraphMouseOut(e) {
 		e.stopPropagation();
 
-		let self = this._obj;
+		let self = this;
 		let node = self._node;
 
 		node._flow.emit({

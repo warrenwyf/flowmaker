@@ -1,15 +1,55 @@
+import CommonUtil from './CommonUtil';
+
 const XHTML_NS = 'http://www.w3.org/1999/xhtml';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
+const DOM_EVENT_PREFIX = '__fm_dom_event__';
 
 let _svgImages = {};
 let _svgImageSeq = 1;
 let _svgGrads = {};
 let _svgGradsSeq = 1;
 
-
 export default class DomUtil {
+
+	static getDomEventKey(type, fn, context) {
+		return DOM_EVENT_PREFIX + type + '_' + CommonUtil.stamp(fn) + (context ? '_' + CommonUtil.stamp(context) : '');
+	}
+
+	static addListener(element, type, fn, context) {
+		let self = this,
+			eventKey = DomUtil.getDomEventKey(type, fn, context),
+			handler = element[eventKey];
+
+		if (handler) {
+			return self;
+		}
+
+		handler = function(e) {
+			return fn.call(context || element, e);
+		};
+
+		element.addEventListener(type, handler);
+		element[eventKey] = handler;
+
+		return self;
+	}
+
+	static removeListener(element, type, fn, context) {
+		let self = this,
+			eventKey = DomUtil.getDomEventKey(type, fn, context),
+			handler = element[eventKey];
+
+		if (!handler) {
+			return self;
+		}
+
+		element.removeEventListener(type, handler);
+		element[eventKey] = null;
+
+		return self;
+	}
 
 	static create(tagName, className, parent) {
 		let element = document.createElement(tagName);
