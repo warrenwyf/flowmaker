@@ -1,39 +1,65 @@
 import DomUtil from '../util/DomUtil';
+import CommonUtil from '../util/CommonUtil';
 import Port from './Port';
+
+const DEFAULT_OPTIONS = {
+	extInfo: {}, // info for external reference
+	name: 'Unknown',
+	nameSize: '1em',
+	desc: 'an unknown node',
+	descSize: '0.9em',
+	gap: 4,
+	bgSize: 40,
+	bgRadius: 4,
+	bgColor: '#ccc',
+	bgOpacity: 1.0,
+	icon: '',
+	selectedColor: '#000',
+	selectedWidth: 2,
+	statusColor: '#ccc',
+	idleColor: '#fff',
+	warnColor: '#fbfb3d',
+	errorColor: '#f14f51',
+	successColor: '#6cc05d',
+	leftPorts: [],
+	rightPorts: [],
+};
 
 export default class Node {
 
 	constructor(options = {}) {
 		let self = this;
 
-		self._options = Object.assign({
-			extInfo: {}, // info for external reference
-			name: 'Unknown',
-			nameSize: '1em',
-			desc: 'an unknown node',
-			descSize: '0.9em',
-			gap: 4,
-			bgSize: 40,
-			bgRadius: 4,
-			bgColor: '#ccc',
-			bgOpacity: 1.0,
-			icon: '',
-			selectedColor: '#000',
-			selectedWidth: 2,
-			statusColor: '#ccc',
-			idleColor: '#fff',
-			warnColor: '#fbfb3d',
-			errorColor: '#f14f51',
-			successColor: '#6cc05d',
-			leftPorts: [],
-			rightPorts: [],
-		}, options);
-
+		self._options = Object.assign({}, DEFAULT_OPTIONS, options);
 
 		self._ports = {}; // key is port id
 
 		self._progress = -1; // show progress bar when this value >= 0
 		self._status = 'idle'; // idle | warn | error | success
+	}
+
+	exportToObject() {
+		let self = this;
+
+		let obj = {
+			options: {},
+			x: self._x,
+			y: self._y,
+			id: self._id,
+		};
+
+		for (let k in self._options) {
+			let v = self._options[k];
+			if (v !== DEFAULT_OPTIONS[k]) {
+				obj.options[k] = v;
+			}
+		}
+
+		if (CommonUtil.isEmptyObject(obj.options)) {
+			delete obj.options;
+		}
+
+		return obj;
 	}
 
 	getId() {
@@ -55,14 +81,17 @@ export default class Node {
 	}
 
 	unselect() {
-		this._updateSelected(false);
+		let self = this;
+
+		self._updateSelected(false);
+		return self;
 	}
 
 	remove() {
 		this._remove();
 	}
 
-	_addToFlow(flow, x, y) {
+	_addToFlow(flow, x, y, options = {}) {
 		let self = this;
 
 		if (self._flow) {
@@ -70,7 +99,7 @@ export default class Node {
 			return;
 		}
 
-		let id = self._id = ++flow._idSeq;
+		let id = self._id = options.id || ++flow._idSeq;
 		flow._nodes[id] = self;
 
 		self._flow = flow;

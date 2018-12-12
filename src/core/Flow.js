@@ -1,8 +1,14 @@
 import DomUtil from '../util/DomUtil';
+import CommonUtil from '../util/CommonUtil';
 import EventBus from './EventBus';
+import Node from './Node';
 import Link from './Link';
 import Temp from './Temp';
 import Validator from './Validator';
+
+const DEFAULT_OPTIONS = {
+	fontSize: 12,
+};
 
 export default class Flow extends EventBus {
 
@@ -17,14 +23,13 @@ export default class Flow extends EventBus {
 			return;
 		}
 
-		self._options = Object.assign({
-			fontSize: 12,
-		}, options);
+		self._options = Object.assign({}, DEFAULT_OPTIONS, options);
 
 		self._x = 0;
 		self._y = 0;
 
 		self._idSeq = 1;
+
 		self._nodes = {};
 		self._links = {};
 
@@ -37,6 +42,81 @@ export default class Flow extends EventBus {
 		temp._addToFlow(self);
 	}
 
+	clear() {
+		let self = this;
+
+		for (let k in self._links) {
+			let link = self._links[k];
+			link.remove();
+		}
+
+		for (let k in self._nodes) {
+			let node = self._nodes[k];
+			node.remove();
+		}
+	}
+
+	exportToObject() {
+		let self = this;
+
+		let obj = {
+			options: {},
+			x: self._x,
+			y: self._y,
+			idSeq: self._idSeq,
+			nodes: [],
+			links: [],
+		};
+
+		for (let k in self._options) {
+			let v = self._options[k];
+			if (v !== DEFAULT_OPTIONS[k]) {
+				obj.options[k] = v;
+			}
+		}
+
+		if (CommonUtil.isEmptyObject(obj.options)) {
+			delete obj.options;
+		}
+
+		for (let k in self._nodes) {
+			let node = self._nodes[k];
+			obj.nodes.push(node.exportToObject());
+		}
+
+		for (let k in self._links) {
+			let link = self._links[k];
+			obj.links.push(link.exportToObject());
+		}
+
+		return obj;
+	}
+
+	importFromObject(obj) {
+		let self = this;
+
+		self.clear();
+
+		self._x = obj.x || 0;
+		self._y = obj.y || 0;
+		self._idSeq = obj.idSeq || 1;
+
+		for (let k in obj.nodes) {
+			let { x, y, options, id } = obj.nodes[k];
+			let node = new Node(options);
+			self.addNode(node, x, y, { id });
+		}
+
+		for (let k in obj.links) {
+			let { fromNodeId, fromPortId, toNodeId, toPortId, options } = obj.links[k];
+			self.connect(fromNodeId, fromPortId, toNodeId, toPortId, options);
+		}
+
+		self._ensureSizeAndPos();
+
+		return self;
+	}
+
 	snapToGrid(gridSize = 8) {
 		let self = this;
 
@@ -46,11 +126,13 @@ export default class Flow extends EventBus {
 				node._snapToGrid(gridSize);
 			}
 		}
+
+		return self;
 	}
 
-	addNode(node, x, y) {
+	addNode(node, x, y, options = {}) {
 		let self = this;
-		node._addToFlow(self, x - self._x, y - self._y);
+		node._addToFlow(self, x - self._x, y - self._y, options);
 
 		return node;
 	}

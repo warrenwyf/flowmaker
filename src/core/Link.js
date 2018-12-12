@@ -1,15 +1,18 @@
 import DomUtil from '../util/DomUtil';
+import CommonUtil from '../util/CommonUtil';
+
+const DEFAULT_OPTIONS = {
+	color: '#999',
+	width: 2,
+	selectedColor: '#000',
+};
 
 export default class Link {
 
 	constructor(fromNodeId, fromPortId, toNodeId, toPortId, options = {}) {
 		let self = this;
 
-		self._options = Object.assign({
-			color: '#999',
-			width: 2,
-			selectedColor: '#000',
-		}, options);
+		self._options = Object.assign({}, DEFAULT_OPTIONS, options);
 
 		self._fromNodeId = fromNodeId;
 		self._fromPortId = fromPortId;
@@ -17,8 +20,36 @@ export default class Link {
 		self._toPortId = toPortId;
 	}
 
+	exportToObject() {
+		let self = this;
+
+		let obj = {
+			options: {},
+			fromNodeId: self._fromNodeId,
+			fromPortId: self._fromPortId,
+			toNodeId: self._toNodeId,
+			toPortId: self._toPortId,
+		};
+
+		for (let k in self._options) {
+			let v = self._options[k];
+			if (v !== DEFAULT_OPTIONS[k]) {
+				obj.options[k] = v;
+			}
+		}
+
+		if (CommonUtil.isEmptyObject(obj.options)) {
+			delete obj.options;
+		}
+
+		return obj;
+	}
+
 	unselect() {
-		this._updateSelected(false);
+		let self = this;
+
+		self._updateSelected(false);
+		return self;
 	}
 
 	remove() {

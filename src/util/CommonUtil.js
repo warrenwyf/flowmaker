@@ -9,4 +9,11 @@ export default class CommonUtil {
 		return obj[ID_KEY];
 	}
 
+	static isEmptyObject(obj) {
+		for (var k in obj) {
+			return false;
+		}
+		return true;
+	}
+
 };

@@ -116,6 +116,7 @@
 
 	function newUnknownNode() {
 		return new flowmaker.Node({
+			extInfo: { type: 'unknown' },
 			icon: 'img/icon-unknown.png',
 			rightPorts: [{
 				type: 'output',
@@ -125,6 +126,7 @@
 
 	function newCacheNode() {
 		return new flowmaker.Node({
+			extInfo: { type: 'cache' },
 			name: 'Cache',
 			desc: '',
 			icon: 'img/icon-cache.png',
