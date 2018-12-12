@@ -32,6 +32,7 @@
 
 	var flow = new flowmaker.Flow('flow');
 
+	var nodes1 = [];
 	for (var i = 0; i < 5; i++) {
 		var node1 = new flowmaker.Node({
 			icon: 'img/icon-unknown.png',
@@ -40,8 +41,11 @@
 			}],
 		});
 		flow.addNode(node1, 200, 200 + 100 * i);
+
+		nodes1.push(node1);
 	}
 
+	var nodes2 = [];
 	for (var i = 0; i < 5; i++) {
 		var node2 = new flowmaker.Node({
 			name: 'Cache',
@@ -58,9 +62,15 @@
 			}],
 		});
 		flow.addNode(node2, 400, 200 + 100 * i);
+
+		nodes2.push(node2);
 	}
 
-	flow.connect(node1.getId(), 'r-0', node2.getId(), 'l-1');
+	for (var i = 0; i < 5; i++) {
+		var rand = parseInt(Math.random() * 5);
+
+		flow.connect(nodes1[rand].getId(), 'r-0', nodes2[i].getId(), 'l-1');
+	}
 	</script>
 
 </body>

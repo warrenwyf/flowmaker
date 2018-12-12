@@ -196,6 +196,24 @@ export default class Node {
 		flow._graph.appendChild(g);
 	}
 
+	_snapToGrid(gridSize) {
+		let self = this;
+
+		let oldX = self._x;
+		let oldY = self._y;
+
+		let modX = oldX % gridSize;
+		let modY = oldY % gridSize;
+
+		if (modX !== 0 || modY !== 0) {
+			self._x = oldX - modX;
+			self._y = oldY - modY;
+			self._updatePos();
+
+			self._flow.emit({ type: 'nodeMove', data: { id: self._id } });
+		}
+	}
+
 	_calcPortAnchor(portOptions, sideIdx, sideX, sideLen, sideSpacing) {
 		let self = this;
 		let options = self._options;

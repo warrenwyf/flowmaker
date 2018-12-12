@@ -81,7 +81,18 @@ export default class Link {
 		let self = this;
 		let flow = self._flow;
 
-		flow.on('nodeMove', self._updateShape, self);
+		flow.on('nodeMove', self._onNodeMove, self);
+	}
+
+	_onNodeMove(e) {
+		let self = this;
+		let flow = self._flow;
+
+		// Update if the node is relative
+		let nodeId = e.data.id;
+		if (self._fromNodeId == nodeId || self._toNodeId == nodeId) {
+			self._updateShape();
+		}
 	}
 
 };

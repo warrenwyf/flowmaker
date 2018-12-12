@@ -30,6 +30,17 @@ export default class Flow extends EventBus {
 		temp._addToFlow(self);
 	}
 
+	snapToGrid(gridSize) {
+		let self = this;
+
+		if (gridSize > 0) {
+			for (let key in self._nodes) {
+				let node = self._nodes[key];
+				node._snapToGrid(gridSize);
+			}
+		}
+	}
+
 	addNode(node, x, y) {
 		node._addToFlow(this, x, y);
 
