@@ -97,8 +97,8 @@ export default class Port {
 			data: {
 				nodeId: node._id,
 				portId: self._id,
-				x: e.clientX,
-				y: e.clientY,
+				x: e.offsetX,
+				y: e.offsetY,
 			}
 		});
 	}
@@ -114,8 +114,8 @@ export default class Port {
 			data: {
 				nodeId: node._id,
 				portId: self._id,
-				x: e.clientX,
-				y: e.clientY,
+				x: e.offsetX,
+				y: e.offsetY,
 			}
 		});
 	}
@@ -131,8 +131,8 @@ export default class Port {
 			data: {
 				nodeId: node._id,
 				portId: self._id,
-				x: e.clientX,
-				y: e.clientY,
+				x: e.offsetX,
+				y: e.offsetY,
 			}
 		});
 	}

@@ -16,7 +16,7 @@ export default class Node {
 			bgSize: 40,
 			bgRadius: 4,
 			bgColor: '#ccc',
-			bgOpacity: 0.8,
+			bgOpacity: 1.0,
 			icon: '',
 			selectedColor: '#000',
 			selectedWidth: 2,
@@ -294,8 +294,8 @@ export default class Node {
 
 		let self = this;
 
-		self._x = self._dragStartX + e.clientX - self._dragStartEvent.clientX;
-		self._y = self._dragStartY + e.clientY - self._dragStartEvent.clientY;
+		self._x = self._dragStartX + e.offsetX - self._dragStartEvent.offsetX;
+		self._y = self._dragStartY + e.offsetY - self._dragStartEvent.offsetY;
 
 		self._ensurePos();
 

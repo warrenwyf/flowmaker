@@ -14,40 +14,117 @@
 		padding: 0;
 	}
 
-	#flow {
-		width: 100%;
+	#processors {
+		float: left;
+		width: 20%;
 		height: 100%;
 		touch-action: none;
+		background: #f0f0f0;
+	}
+
+	#flow {
+		float: right;
+		width: 80%;
+		height: 100%;
+		touch-action: none;
+	}
+
+	#processors ul {
+		padding-inline-start: 1em;
+	}
+
+	.processor {
+		list-style: none;
+		margin-bottom: 8px;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.processor>#icon,
+	.processor>#name {
+		display: inline-block;
+		vertical-align: middle;
+	}
+
+	.processor>#icon {
+		width: 24px;
+		height: 24px;
+		margin-right: 8px;
+		padding: 4px;
+		border-radius: 4px;
+		cursor: default;
+	}
+
+	.processor>#icon>img {
+		width: 24px;
+		height: 24px;
 	}
 	</style>
 </head>
 
 <body>
 
-	<div id="flow"></div>
+	<div id="processors">
+		<ul>
+			<li class="processor" draggable="true" ondragstart="onProcessorDragStart(event)" data-type="unknown">
+				<div id="icon" style="background: #ccc"><img src="./img/icon-unknown.png" ondragstart="onImgDragStart(event)"></div>
+					<text id="name">Unknow</text>
+			</li>
+			<li class="processor" draggable="true" ondragstart="onProcessorDragStart(event)" data-type="cache">
+				<div id="icon" style="background: #faa33e"><img src="./img/icon-cache.png" ondragstart="onImgDragStart(event)"></div>
+					<text id="name">Cache</text>
+			</li>
+		</ul>
+	</div>
+
+	<div id="flow" ondragover="onProcessorDragOver(event)" ondrop="onProcessorDrop(event)"></div>
 
 	<script type="text/javascript" src="../dist/flowmaker.js"></script>
 	<script type="text/javascript">
 	console.log('flowmaker version:', flowmaker.version);
-
 	var flow = new flowmaker.Flow('flow');
 
-	var nodes1 = [];
-	for (var i = 0; i < 5; i++) {
-		var node1 = new flowmaker.Node({
+	function onImgDragStart(e) {
+		e.preventDefault();
+	}
+
+	function onProcessorDragStart(e) {
+		var type = e.target.getAttribute('data-type');
+		e.dataTransfer.setData('type', type);
+	}
+
+	function onProcessorDragOver(e) {
+		e.preventDefault();
+	}
+
+	function onProcessorDrop(e) {
+		e.preventDefault();
+
+		var type = e.dataTransfer.getData('type');
+		var x = e.offsetX;
+		var y = e.offsetY;
+
+		switch (type) {
+			case 'unknown':
+				flow.addNode(newUnknownNode(), x, y);
+				break;
+			case 'cache':
+				flow.addNode(newCacheNode(), x, y);
+				break;
+		}
+	}
+
+	function newUnknownNode() {
+		return new flowmaker.Node({
 			icon: 'img/icon-unknown.png',
 			rightPorts: [{
 				type: 'output',
 			}],
 		});
-		flow.addNode(node1, 200, 200 + 100 * i);
-
-		nodes1.push(node1);
 	}
 
-	var nodes2 = [];
-	for (var i = 0; i < 5; i++) {
-		var node2 = new flowmaker.Node({
+	function newCacheNode() {
+		return new flowmaker.Node({
 			name: 'Cache',
 			desc: '',
 			icon: 'img/icon-cache.png',
@@ -61,6 +138,19 @@
 				type: 'output',
 			}],
 		});
+	}
+
+	var nodes1 = [];
+	for (var i = 0; i < 5; i++) {
+		var node1 = newUnknownNode();
+		flow.addNode(node1, 200, 200 + 100 * i);
+
+		nodes1.push(node1);
+	}
+
+	var nodes2 = [];
+	for (var i = 0; i < 5; i++) {
+		var node2 = newCacheNode();
 		flow.addNode(node2, 400, 200 + 100 * i);
 
 		nodes2.push(node2);

@@ -49,7 +49,8 @@ export default class Flow extends EventBus {
 	}
 
 	addNode(node, x, y) {
-		node._addToFlow(this, x, y);
+		let self = this;
+		node._addToFlow(self, x - self._x, y - self._y);
 
 		return node;
 	}
@@ -178,8 +179,8 @@ export default class Flow extends EventBus {
 
 		let self = this;
 
-		self._x = self._dragStartX + e.clientX - self._dragStartEvent.clientX;
-		self._y = self._dragStartY + e.clientY - self._dragStartEvent.clientY;
+		self._x = self._dragStartX + e.offsetX - self._dragStartEvent.offsetX;
+		self._y = self._dragStartY + e.offsetY - self._dragStartEvent.offsetY;
 
 		self._ensureSizeAndPos();
 	}

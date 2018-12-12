@@ -91,8 +91,8 @@ export default class Temp {
 		let fromY = startData.y;
 
 		let flow = self._flow;
-		let toX = e.clientX - flow._x;
-		let toY = e.clientY - flow._y;
+		let toX = e.offsetX - flow._x;
+		let toY = e.offsetY - flow._y;
 
 		let connectingGraph = self._connectingGraph;
 		connectingGraph.setAttribute('d', `M ${fromX},${fromY} L ${toX},${toY}`);
