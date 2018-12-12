@@ -19,12 +19,17 @@ export default class Flow extends EventBus {
 
 		self._options = Object.assign({}, options);
 
+		self._x = 0;
+		self._y = 0;
+
 		self._idSeq = 1;
 		self._nodes = {};
 		self._links = {};
 
 		self._initGraph();
 		self._initListeners();
+
+		self._updateSizeAndPos();
 
 		let temp = new Temp();
 		temp._addToFlow(self);
@@ -101,11 +106,9 @@ export default class Flow extends EventBus {
 		g.setAttribute('height', '100%');
 
 		g._obj = self;
-
-		self._updateSize();
 	}
 
-	_updateSize() {
+	_updateSizeAndPos() {
 		let self = this;
 
 		let container = self._container;
@@ -113,7 +116,7 @@ export default class Flow extends EventBus {
 		let h = container.offsetHeight;
 
 		let g = self._graph;
-		g.setAttribute('viewBox', [0, 0, w, h].join(' '));
+		g.setAttribute('viewBox', [-self._x, -self._y, w, h].join(' '));
 	}
 
 	_initListeners() {
@@ -122,6 +125,47 @@ export default class Flow extends EventBus {
 		window.addEventListener("resize", function() {
 			self._updateSize();
 		});
+
+		let g = self._graph;
+		g.addEventListener("mousedown", self._onMouseDown);
+	}
+
+	_onMouseDown(e) {
+		e.stopPropagation();
+
+		let self = this._obj;
+
+		let g = self._graph;
+		g.addEventListener("mousemove", self._onMouseMove);
+		g.addEventListener("mouseup", self._onMouseUp);
+
+		self._dragStartX = self._x;
+		self._dragStartY = self._y;
+		self._dragStartEvent = e;
+
+		g.setAttribute('cursor', 'move');
+	}
+
+	_onMouseMove(e) {
+		e.stopPropagation();
+
+		let self = this._obj;
+
+		self._x = self._dragStartX + e.clientX - self._dragStartEvent.clientX;
+		self._y = self._dragStartY + e.clientY - self._dragStartEvent.clientY;
+
+		self._updateSizeAndPos();
+	}
+
+	_onMouseUp(e) {
+		e.stopPropagation();
+
+		let self = this._obj;
+
+		this.removeEventListener("mousemove", self._onMouseMove);
+		this.removeEventListener("mouseup", self._onMouseUp);
+
+		self._graph.setAttribute('cursor', 'default');
 	}
 
 };

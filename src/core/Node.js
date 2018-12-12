@@ -234,6 +234,8 @@ export default class Node {
 	}
 
 	_onMouseDown(e) {
+		e.stopPropagation();
+
 		let self = this._obj;
 
 		let flowGraph = self._flow._graph;
@@ -243,19 +245,18 @@ export default class Node {
 
 		self._dragStartX = self._x;
 		self._dragStartY = self._y;
-		self._dragStartEvt = e;
+		self._dragStartEvent = e;
 
 		self._graphDraggable.setAttribute('cursor', 'move');
 	}
 
 	_onMouseMove(e) {
+		e.stopPropagation();
+
 		let self = this._draggingTarget;
 
-		let dx = e.clientX - self._dragStartEvt.clientX;
-		let dy = e.clientY - self._dragStartEvt.clientY;
-
-		self._x = self._dragStartX + e.clientX - self._dragStartEvt.clientX;
-		self._y = self._dragStartY + e.clientY - self._dragStartEvt.clientY;
+		self._x = self._dragStartX + e.clientX - self._dragStartEvent.clientX;
+		self._y = self._dragStartY + e.clientY - self._dragStartEvent.clientY;
 
 		self._updatePos();
 
@@ -263,6 +264,8 @@ export default class Node {
 	}
 
 	_onMouseUp(e) {
+		e.stopPropagation();
+
 		let self = this._draggingTarget;
 
 		this.removeEventListener("mousemove", self._onMouseMove);
@@ -290,7 +293,7 @@ export default class Node {
 
 		self._dragStartX = self._x;
 		self._dragStartY = self._y;
-		self._dragStartEvt = e;
+		self._dragStartEvent = e;
 
 		self._graphDraggable.setAttribute('cursor', 'move');
 	}

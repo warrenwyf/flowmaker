@@ -80,6 +80,8 @@ export default class Temp {
 	}
 
 	_onConnectMove(e) {
+		e.stopPropagation();
+
 		let self = this._obj._temp;
 
 		let startData = self._connectStartData;
@@ -90,14 +92,17 @@ export default class Temp {
 		let fromX = startData.x;
 		let fromY = startData.y;
 
-		let toX = e.clientX;
-		let toY = e.clientY;
+		let flow = self._flow;
+		let toX = e.clientX - flow._x;
+		let toY = e.clientY - flow._y;
 
 		let connectingGraph = self._connectingGraph;
 		connectingGraph.setAttribute('d', `M ${fromX},${fromY} L ${toX},${toY}`);
 	}
 
 	_onConnectEnd(e) {
+		e.stopPropagation();
+
 		let self = this._obj._temp;
 
 		let startData = self._connectStartData;

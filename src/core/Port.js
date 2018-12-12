@@ -72,6 +72,8 @@ export default class Port {
 	}
 
 	_onMouseDown(e) {
+		e.stopPropagation();
+
 		let self = this._obj;
 		let node = self._node;
 
@@ -87,6 +89,8 @@ export default class Port {
 	}
 
 	_onMouseOver(e) {
+		e.stopPropagation();
+
 		let self = this._obj;
 		let node = self._node;
 
@@ -102,6 +106,8 @@ export default class Port {
 	}
 
 	_onMouseOut(e) {
+		e.stopPropagation();
+
 		let self = this._obj;
 		let node = self._node;
 
