@@ -2,6 +2,7 @@ import DomUtil from '../util/DomUtil';
 import EventBus from './EventBus';
 import Link from './Link';
 import Temp from './Temp';
+import Validator from './Validator';
 
 export default class Flow extends EventBus {
 
@@ -36,8 +37,15 @@ export default class Flow extends EventBus {
 	}
 
 	connect(fromNodeId, fromPortId, toNodeId, toPortId, options) {
+		let self = this;
+
+		let connectable = Validator.isConnectable(self, fromNodeId, fromPortId, toNodeId, toPortId);
+		if (!connectable) {
+			return;
+		}
+
 		let link = new Link(fromNodeId, fromPortId, toNodeId, toPortId, options);
-		link._addToFlow(this);
+		link._addToFlow(self);
 
 		return link;
 	}

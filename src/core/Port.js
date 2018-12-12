@@ -13,6 +13,10 @@ export default class Port {
 		}, options);
 	}
 
+	getType() {
+		return this._options.type;
+	}
+
 	_addToNode(node, idInNode, anchor) {
 		let self = this;
 

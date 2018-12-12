@@ -41,6 +41,10 @@ export default class Node {
 		return this._id;
 	}
 
+	getPort(portId) {
+		return this._ports[portId];
+	}
+
 	getPortAnchor(portId) {
 		let self = this;
 

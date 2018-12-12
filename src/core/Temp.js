@@ -1,4 +1,5 @@
 import DomUtil from '../util/DomUtil';
+import Validator from './Validator';
 
 export default class Temp {
 
@@ -128,22 +129,28 @@ export default class Temp {
 
 	_onOverPort(e) {
 		let self = this;
-		let g = self._graph;
+		let options = self._options;
 
-		if (self._connectStartData) { // tring connect port
-			self._connectOverEvent = e;
-
-			// TODO: test connectable
-			if (e) {
-				let connectingGraph = self._connectingGraph;
-				connectingGraph && connectingGraph.setAttribute('stroke-dasharray', '');
-			}
+		let startData = self._connectStartData;
+		if (!startData) {
+			return;
 		}
+
+		self._connectOverEvent = e;
+
+		let fromNodeId = startData.nodeId;
+		let fromPortId = startData.portId;
+		let toNodeId = e.data.nodeId;
+		let toPortId = e.data.portId;
+
+		let flow = self._flow;
+		let connectable = Validator.isConnectable(flow, fromNodeId, fromPortId, toNodeId, toPortId);
+		let connectingGraph = self._connectingGraph;
+		connectingGraph && connectingGraph.setAttribute('stroke-dasharray', connectable ? '' : options.connectingDash);
 	}
 
 	_onLeavePort(e) {
 		let self = this;
-		let g = self._graph;
 
 		let overEvent = self._connectOverEvent;
 		if (overEvent && overEvent.data.nodeId == e.data.nodeId && overEvent.data.portId == e.data.portId) {
