@@ -5,6 +5,7 @@ import Node from './Node';
 import Link from './Link';
 import Temp from './Temp';
 import Validator from './Validator';
+import JsonReceiver from '../protocol/JsonReceiver';
 
 const DEFAULT_OPTIONS = {
 	fontSize: 12,
@@ -24,6 +25,7 @@ export default class Flow extends EventBus {
 		}
 
 		self._options = Object.assign({}, DEFAULT_OPTIONS, options);
+		self._jsonReceiver = new JsonReceiver(self);
 
 		self._x = 0;
 		self._y = 0;
@@ -168,6 +170,16 @@ export default class Flow extends EventBus {
 
 	getLink(linkId) {
 		return this._links[linkId];
+	}
+
+	sendCommand(command, protocol = 'json') {
+		let self = this;
+
+		switch (protocol) {
+			case 'json':
+				self._jsonReceiver.handle(command);
+				break;
+		}
 	}
 
 	_initGraph() {
