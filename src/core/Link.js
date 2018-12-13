@@ -135,8 +135,8 @@ export default class Link {
 			return;
 		}
 
-		let [fromX, fromY] = fromNode.getPortAnchor(self._fromPortId);
-		let [toX, toY] = toNode.getPortAnchor(self._toPortId);
+		let [fromX, fromY] = fromNode._getPortAnchor(self._fromPortId);
+		let [toX, toY] = toNode._getPortAnchor(self._toPortId);
 
 		let g = self._graph;
 		if (toX > fromX) {

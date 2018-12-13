@@ -67,7 +67,7 @@ export default class Temp {
 		let { nodeId, portId, x, y } = e.data;
 		if (nodeId && portId) {
 			let node = flow.getNode(nodeId);
-			let anchor = node && node.getPortAnchor(portId);
+			let anchor = node && node._getPortAnchor(portId);
 			self._connectStartData = {
 				nodeId,
 				portId,

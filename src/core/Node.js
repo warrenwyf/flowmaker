@@ -70,16 +70,6 @@ export default class Node {
 		return this._ports[portId];
 	}
 
-	getPortAnchor(portId) {
-		let self = this;
-
-		let port = self._ports[portId];
-		if (port) {
-			let anchor = port._anchor;
-			return [anchor[0] + self._x, anchor[1] + self._y];
-		}
-	}
-
 	unselect() {
 		let self = this;
 
@@ -275,6 +265,16 @@ export default class Node {
 			self._ensurePos();
 
 			self._flow.emit({ type: 'nodeMove', data: { id: self._id } });
+		}
+	}
+
+	_getPortAnchor(portId) {
+		let self = this;
+
+		let port = self._ports[portId];
+		if (port) {
+			let anchor = port._anchor;
+			return [anchor[0] + self._x, anchor[1] + self._y];
 		}
 	}
 
