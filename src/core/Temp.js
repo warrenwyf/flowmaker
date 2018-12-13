@@ -51,19 +51,6 @@ export default class Temp {
 		let self = this;
 		let flow = self._flow;
 
-		let options = self._options;
-		let g = self._graph;
-
-		let connectingGraph = self._connectingGraph = self._connectingGraph || DomUtil.createSVG('path', 'fm-connecting', g);
-		connectingGraph.setAttribute('stroke', options.connectingColor);
-		connectingGraph.setAttribute('stroke-opacity', options.connectingOpacity);
-		connectingGraph.setAttribute('stroke-width', 2);
-		connectingGraph.setAttribute('stroke-dasharray', options.connectingDash);
-
-		let flowGraph = flow._graph;
-		DomUtil.addListener(flowGraph, 'mousemove', self._onFlowGraphMouseMove, self);
-		DomUtil.addListener(flowGraph, 'mouseup', self._onFlowGraphMouseUp, self);
-
 		let { nodeId, portId, x, y } = e.data;
 		if (nodeId && portId) {
 			let node = flow.getNode(nodeId);
@@ -75,6 +62,20 @@ export default class Temp {
 				y: anchor ? anchor[1] : y,
 			};
 		}
+
+		let options = self._options;
+		let g = self._graph;
+
+		let connectingGraph = self._connectingGraph = self._connectingGraph || DomUtil.createSVG('path', 'fm-connecting', g);
+		connectingGraph.setAttribute('stroke', options.connectingColor);
+		connectingGraph.setAttribute('stroke-opacity', options.connectingOpacity);
+		connectingGraph.setAttribute('stroke-width', 2);
+		connectingGraph.setAttribute('stroke-dasharray', options.connectingDash);
+		connectingGraph.setAttribute('d', `M ${x},${y} L ${x},${y}`);
+
+		let flowGraph = flow._graph;
+		DomUtil.addListener(flowGraph, 'mousemove', self._onFlowGraphMouseMove, self);
+		DomUtil.addListener(flowGraph, 'mouseup', self._onFlowGraphMouseUp, self);
 	}
 
 	_onFlowGraphMouseMove(e) {

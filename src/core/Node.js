@@ -16,8 +16,10 @@ const DEFAULT_OPTIONS = {
 	icon: '',
 	selectedColor: '#000',
 	selectedWidth: 2,
-	statusColor: '#ccc',
-	idleColor: '#fff',
+	statusOutlineColor: '#ccc',
+	statusOutlineWidth: 1,
+	idleColor: '#ccc',
+	runningColor: '#3b88fd',
 	warnColor: '#fbfb3d',
 	errorColor: '#f14f51',
 	successColor: '#6cc05d',
@@ -89,6 +91,8 @@ export default class Node {
 			let node = link && flow.getNode(link._fromNodeId);
 			node && nodes.push(node);
 		}
+
+		for (let i of self._ports) {}
 
 		return nodes;
 	}
@@ -209,6 +213,27 @@ export default class Node {
 		desc.setAttribute('alignment-baseline', 'text-before-edge');
 		desc.setAttribute('cursor', 'default');
 
+		// status
+		let status = self._graphStatus = DomUtil.createSVG('rect', 'fm-node-status', g);
+		status.setAttribute('x', -options.bgSize / 2);
+		status.setAttribute('y', options.bgSize / 2 + options.gap);
+		status.setAttribute('width', options.bgSize);
+		status.setAttribute('height', options.gap);
+		status.setAttribute('rx', options.gap / 2);
+		status.setAttribute('ry', options.gap / 2);
+		status.setAttribute('fill', options.idleColor);
+		status.setAttribute('stroke', options.statusOutlineColor);
+		status.setAttribute('stroke-width', options.statusOutlineWidth);
+
+		// progress
+		let progress = self._graphProgress = DomUtil.createSVG('rect', 'fm-node-progress', g);
+		progress.setAttribute('x', -options.bgSize / 2 + options.statusOutlineWidth);
+		progress.setAttribute('y', options.bgSize / 2 + options.gap + options.statusOutlineWidth);
+		progress.setAttribute('width', 0);
+		progress.setAttribute('height', options.gap - 2 * options.statusOutlineWidth);
+		progress.setAttribute('rx', options.gap / 2);
+		progress.setAttribute('ry', options.gap / 2);
+		progress.setAttribute('fill', options.runningColor);
 
 		// used by ports
 		let sideLen = options.bgSize - 4 * options.bgRadius;
@@ -238,28 +263,6 @@ export default class Node {
 				port._addToNode(self, `r-${i}`, anchor);
 			}
 		}
-
-
-		// progress
-		let progress = self._graphProgress = DomUtil.createSVG('foreignObject', 'fm-node-progress', g);
-		progress.setAttribute('transform', `translate(${-options.bgSize / 2} ${options.bgSize / 2})`);
-		let x = progress._xhtml = DomUtil.createXhtml('progress', '', progress);
-		x.setAttribute('max', '100');
-		x.style.width = options.bgSize + 'px';
-		x.style.height = options.gap + 'px';
-		x.style.display = 'none';
-
-		// status
-		let status = self._graphStatus = DomUtil.createSVG('rect', 'fm-node-status', g);
-		status.setAttribute('x', -options.bgSize / 2);
-		status.setAttribute('y', options.bgSize / 2 + options.gap);
-		status.setAttribute('width', options.bgSize);
-		status.setAttribute('height', options.gap);
-		status.setAttribute('rx', options.gap / 2);
-		status.setAttribute('ry', options.gap / 2);
-		status.setAttribute('fill', options.idleColor);
-		status.setAttribute('stroke', options.statusColor);
-		status.setAttribute('stroke-width', '1');
 
 
 		let flow = self._flow;
@@ -421,25 +424,27 @@ export default class Node {
 
 	_updateProgress(v) {
 		let self = this;
+		let options = self._options;
 
-		self._progress = v;
+		// progress should be [0, 100]
+		let progress = self._progress = v < 0 ? 0 : Math.min(v, 100);
+		let w = options.bgSize - 2 * options.statusOutlineWidth;
 
-		let xhtmlProgress = self._graphProgress._xhtml;
-		xhtmlProgress.setAttribute('value', v);
+		let graphProgress = self._graphProgress;
+		graphProgress.setAttribute('width', w * progress / 100);
 	}
 
 	_updateStatus(status) {
 		let self = this;
 		let options = self._options;
 
-		let xhtmlProgress = self._graphProgress._xhtml;
-		let graphStatus = self._graphStatus
+		let graphStatus = self._graphStatus;
+		let graphProgress = self._graphProgress;
 
 		self._status = status;
 		if (status == 'running') { // show progress if status is running
-			xhtmlProgress.setAttribute('value', 0);
-			xhtmlProgress.style.display = 'block';
-			graphStatus.setAttribute('display', 'none');
+			graphStatus.setAttribute('fill', 'none');
+			graphProgress.setAttribute('fill', options.runningColor);
 		} else {
 			let color = options.idleColor;
 			switch (status) {
@@ -454,9 +459,7 @@ export default class Node {
 					break;
 			}
 			graphStatus.setAttribute('fill', color);
-
-			xhtmlProgress.style.display = 'none';
-			graphStatus.setAttribute('display', 'block');
+			graphProgress.setAttribute('fill', 'none');
 		}
 	}
 
