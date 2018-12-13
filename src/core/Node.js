@@ -35,7 +35,7 @@ export default class Node {
 		self._ports = {}; // key is port id
 
 		self._progress = -1; // show progress bar when this value >= 0
-		self._status = 'idle'; // idle | warn | error | success
+		self._status = 'idle'; // idle | running | warn | error | success
 	}
 
 	exportToObject() {
@@ -385,30 +385,40 @@ export default class Node {
 
 		self._progress = v;
 
-		let x = self._graphProgress._xhtml;
-		x.setAttribute('value', `${v}`);
-		x.style.display = v >= 0 ? 'block' : 'none';
+		let xhtmlProgress = self._graphProgress._xhtml;
+		xhtmlProgress.setAttribute('value', v);
 	}
 
 	_updateStatus(status) {
 		let self = this;
 		let options = self._options;
 
-		self._status = status;
+		let xhtmlProgress = self._graphProgress._xhtml;
+		let graphStatus = self._graphStatus
 
-		let color = options.idleColor;
-		switch (status) {
-			case 'warn':
-				color = options.warnColor;
-				break;
-			case 'error':
-				color = options.errorColor;
-				break;
-			case 'success':
-				color = options.successColor;
-				break;
+		self._status = status;
+		if (status == 'running') { // show progress if status is running
+			xhtmlProgress.setAttribute('value', 0);
+			xhtmlProgress.style.display = 'block';
+			graphStatus.setAttribute('display', 'none');
+		} else {
+			let color = options.idleColor;
+			switch (status) {
+				case 'warn':
+					color = options.warnColor;
+					break;
+				case 'error':
+					color = options.errorColor;
+					break;
+				case 'success':
+					color = options.successColor;
+					break;
+			}
+			graphStatus.setAttribute('fill', color);
+
+			xhtmlProgress.style.display = 'none';
+			graphStatus.setAttribute('display', 'block');
 		}
-		self._graphStatus.setAttribute('fill', color);
 	}
 
 	_updateSelected(flag) {
