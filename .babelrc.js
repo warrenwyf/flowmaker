@@ -13,10 +13,12 @@ const presets = [
   ],
 ];
 
-const plugins = [];
+const plugins = [
+  '@babel/plugin-transform-object-assign',
+];
 
 const ignore = [
-  'dist/*.js',
+  'dist/**',
 ];
 
 module.exports = { presets, plugins, ignore };
