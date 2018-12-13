@@ -77,6 +77,41 @@ export default class Node {
 		return self;
 	}
 
+	getUpstreamNodes() {
+		let self = this;
+		let flow = self._flow;
+
+		let nodes = [];
+		for (let k in self._ports) {
+			let port = self._ports[k];
+			let portKey = self._getPortKey(port._id);
+			let link = flow._linksByTo[portKey];
+			let node = link && flow.getNode(link._fromNodeId);
+			node && nodes.push(node);
+		}
+
+		return nodes;
+	}
+
+	getDownstreamNodes() {
+		let self = this;
+		let flow = self._flow;
+
+		let nodes = [];
+		for (let k in self._ports) {
+			let port = self._ports[k];
+			let portKey = self._getPortKey(port._id);
+			let links = flow._linksByFrom[portKey] || {};
+			for (let linkKey in links) {
+				let link = links[linkKey];
+				let node = link && flow.getNode(link._toNodeId);
+				node && nodes.push(node);
+			}
+		}
+
+		return nodes;
+	}
+
 	remove() {
 		this._remove();
 	}
@@ -266,6 +301,10 @@ export default class Node {
 
 			self._flow.emit({ type: 'nodeMove', data: { id: self._id } });
 		}
+	}
+
+	_getPortKey(portId) {
+		return `${this._id}:${portId}`;
 	}
 
 	_getPortAnchor(portId) {

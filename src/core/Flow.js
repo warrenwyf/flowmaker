@@ -33,7 +33,8 @@ export default class Flow extends EventBus {
 		self._idSeq = 1;
 
 		self._nodes = {};
-		self._links = {};
+		self._linksByFrom = {};
+		self._linksByTo = {};
 
 		self._initGraph();
 		self._initListeners();
@@ -150,26 +151,11 @@ export default class Flow extends EventBus {
 		let link = new Link(fromNodeId, fromPortId, toNodeId, toPortId, options);
 		link._addToFlow(self);
 
-		self.emit({
-			type: 'linkEstablished',
-			data: {
-				id: link._id,
-				fromNodeId,
-				fromPortId,
-				toNodeId,
-				toPortId,
-			}
-		});
-
 		return link;
 	}
 
 	getNode(nodeId) {
 		return this._nodes[nodeId];
-	}
-
-	getLink(linkId) {
-		return this._links[linkId];
 	}
 
 	sendCommand(command, protocol = 'json') {

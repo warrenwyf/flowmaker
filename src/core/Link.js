@@ -56,6 +56,16 @@ export default class Link {
 		this._remove();
 	}
 
+	_getFromKey() {
+		let self = this;
+		return `${self._fromNodeId}:${self._fromPortId}`;
+	}
+
+	_getToKey() {
+		let self = this;
+		return `${self._toNodeId}:${self._toPortId}`;
+	}
+
 	_addToFlow(flow) {
 		let self = this;
 
@@ -64,8 +74,13 @@ export default class Link {
 			return;
 		}
 
-		let id = self._id = `${self._fromNodeId}:${self._fromPortId}-${self._toNodeId}:${self._toPortId}`;
-		flow._links[id] = self;
+		let fromKey = self._getFromKey();
+		let toKey = self._getToKey();
+
+		flow._linksByFrom[fromKey] = flow._linksByFrom[fromKey] || {};
+		flow._linksByFrom[fromKey][toKey] = self; // one fromPort can connect many toPort
+		flow._linksByTo[toKey] && flow._linksByTo[toKey]._remove();
+		flow._linksByTo[toKey] = self; // one toPort can only be connected by one fromPort
 
 		self._flow = flow;
 
@@ -84,7 +99,13 @@ export default class Link {
 		self._removeListeners();
 		self._graph.remove();
 
-		delete flow._links[self._id];
+		let fromKey = self._getFromKey();
+		let toKey = self._getToKey();
+
+		if (toKey in flow._linksByFrom[fromKey]) {
+			delete flow._linksByFrom[fromKey][toKey];
+		}
+		delete flow._linksByTo[toKey];
 
 		self._flow.emit({
 			type: 'linkRemoved',
@@ -175,7 +196,6 @@ export default class Link {
 
 		let flow = self._flow;
 		flow.on('nodeMove', self._onNodeMove, self);
-		flow.on('linkEstablished', self._onLinkEstablished, self);
 		flow.on('nodeRemoved', self._onNodeRemoved, self);
 	}
 
@@ -187,7 +207,6 @@ export default class Link {
 
 		let flow = self._flow;
 		flow.off('nodeMove', self._onNodeMove, self);
-		flow.off('linkEstablished', self._onLinkEstablished, self);
 	}
 
 	_onNodeMove(e) {
@@ -198,24 +217,6 @@ export default class Link {
 		let nodeId = e.data.id;
 		if (self._fromNodeId == nodeId || self._toNodeId == nodeId) {
 			self._ensureShape();
-		}
-	}
-
-	_onLinkEstablished(e) {
-		let self = this;
-		let flow = self._flow;
-
-		let {
-			id,
-			fromNodeId,
-			fromPortId,
-			toNodeId,
-			toPortId
-		} = e.data;
-
-		// remove unavailable links
-		if (self._id != id && self._toNodeId == toNodeId && self._toPortId == toPortId) { // only one Link is allowed to connect to a port
-			self._remove();
 		}
 	}
 

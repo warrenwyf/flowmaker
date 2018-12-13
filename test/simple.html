@@ -29,6 +29,12 @@
 		touch-action: none;
 	}
 
+	#buttons {
+		position: absolute;
+		top: 1em;
+		right: 1em;
+	}
+
 	#processors ul {
 		padding-inline-start: 1em;
 	}
@@ -79,6 +85,11 @@
 
 	<div id="flow" ondragover="onProcessorDragOver(event)" ondrop="onProcessorDrop(event)"></div>
 
+	<div id="buttons">
+		<button onclick="onRunClick()">Run</button>
+		<button onclick="onStopClick()">Stop</button>
+	</div>
+
 	<script type="text/javascript" src="../dist/flowmaker.js"></script>
 	<script type="text/javascript">
 	console.log('flowmaker version:', flowmaker.version);
@@ -112,6 +123,14 @@
 				flow.addNode(newCacheNode(), x, y);
 				break;
 		}
+	}
+
+	function onRunClick() {
+		mockServer.start();
+	}
+
+	function onStopClick() {
+		mockServer.stop();
 	}
 
 	function newUnknownNode() {
@@ -163,6 +182,98 @@
 
 		flow.connect(nodes1[rand].getId(), 'r-0', nodes2[i].getId(), 'l-1');
 	}
+
+	var mockServer = {
+		resetNode: function(nodeId) {
+			var node = flow.getNode(nodeId);
+			if (!node) {
+				console.log('Node does not exists');
+				return;
+			}
+
+			clearInterval(node._tid);
+
+			flow.sendCommand(JSON.stringify({
+				name: 'update_node_status',
+				data: {
+					nodeId: nodeId,
+					status: 'idle',
+				}
+			}));
+
+			// reset downstream nodes
+			var nodes = node.getDownstreamNodes();
+			for (var i in nodes) {
+				mockServer.resetNode(nodes[i].getId());
+			}
+		},
+
+		runNode: function(nodeId) {
+			var node = flow.getNode(nodeId);
+			if (!node) {
+				console.log('Node does not exists');
+				return;
+			}
+
+			mockServer.resetNode(nodeId);
+
+			flow.sendCommand(JSON.stringify({
+				name: 'update_node_status',
+				data: {
+					nodeId: nodeId,
+					status: 'running',
+				}
+			}));
+
+			var progress = 0;
+			node._tid = setInterval(function() {
+				progress += Math.random() * 10;
+				if (progress > 100) {
+					clearInterval(node._tid);
+
+					flow.sendCommand(JSON.stringify({
+						name: 'update_node_status',
+						data: {
+							nodeId: nodeId,
+							status: 'success',
+						}
+					}));
+
+					// run downstream nodes
+					var nodes = node.getDownstreamNodes();
+					for (var i in nodes) {
+						mockServer.runNode(nodes[i].getId());
+					}
+				}
+
+				flow.sendCommand(JSON.stringify({
+					name: 'update_node_progress',
+					data: {
+						nodeId: nodeId,
+						progress: progress,
+					}
+				}));
+			}, 500);
+		},
+
+		start: function() {
+			for (var i in nodes1) {
+				mockServer.runNode(nodes1[i].getId());
+			}
+		},
+
+
+		stop: function() {
+			for (var i in nodes1) {
+				clearInterval(nodes1[i]._tid);
+			}
+
+			for (var i in nodes2) {
+				clearInterval(nodes2[i]._tid);
+			}
+		},
+
+	};
 	</script>
 
 </body>
