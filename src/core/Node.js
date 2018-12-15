@@ -30,28 +30,24 @@ const DEFAULT_OPTIONS = {
 export default class Node {
 
 	constructor(options = {}) {
-		let self = this;
+		this._options = Object.assign({}, DEFAULT_OPTIONS, options);
 
-		self._options = Object.assign({}, DEFAULT_OPTIONS, options);
+		this._ports = {}; // key is port id
 
-		self._ports = {}; // key is port id
-
-		self._progress = -1; // show progress bar when this value >= 0
-		self._status = 'idle'; // idle | running | warn | error | success
+		this._progress = -1; // show progress bar when this value >= 0
+		this._status = 'idle'; // idle | running | warn | error | success
 	}
 
 	exportToObject() {
-		let self = this;
-
 		let obj = {
 			options: {},
-			x: self._x,
-			y: self._y,
-			id: self._id,
+			x: this._x,
+			y: this._y,
+			id: this._id,
 		};
 
-		for (let k in self._options) {
-			let v = self._options[k];
+		for (let k in this._options) {
+			let v = this._options[k];
 			if (v !== DEFAULT_OPTIONS[k]) {
 				obj.options[k] = v;
 			}
@@ -73,38 +69,35 @@ export default class Node {
 	}
 
 	unselect() {
-		let self = this;
 
-		self._updateSelected(false);
-		return self;
+		this._updateSelected(false);
+		return this;
 	}
 
 	getUpstreamNodes() {
-		let self = this;
-		let flow = self._flow;
+		let flow = this._flow;
 
 		let nodes = [];
-		for (let k in self._ports) {
-			let port = self._ports[k];
-			let portKey = self._getPortKey(port._id);
+		for (let k in this._ports) {
+			let port = this._ports[k];
+			let portKey = this._getPortKey(port._id);
 			let link = flow._linksByTo[portKey];
 			let node = link && flow.getNode(link._fromNodeId);
 			node && nodes.push(node);
 		}
 
-		for (let i of self._ports) {}
+		for (let i of this._ports) {}
 
 		return nodes;
 	}
 
 	getDownstreamNodes() {
-		let self = this;
-		let flow = self._flow;
+		let flow = this._flow;
 
 		let nodes = [];
-		for (let k in self._ports) {
-			let port = self._ports[k];
-			let portKey = self._getPortKey(port._id);
+		for (let k in this._ports) {
+			let port = this._ports[k];
+			let portKey = this._getPortKey(port._id);
 			let links = flow._linksByFrom[portKey] || {};
 			for (let linkKey in links) {
 				let link = links[linkKey];
@@ -120,58 +113,58 @@ export default class Node {
 		this._remove();
 	}
 
-	_addToFlow(flow, x, y, options = {}) {
-		let self = this;
+	getBBox() {
+		return this._graph.getBBox();
+	}
 
-		if (self._flow) {
-			throw new Error(`Node<${self._id}> is already in a flow`);
+	_addToFlow(flow, x, y, options = {}) {
+		if (this._flow) {
+			throw new Error(`Node<${this._id}> is already in a flow`);
 			return;
 		}
 
-		let id = self._id = options.id || ++flow._idSeq;
-		flow._nodes[id] = self;
+		let id = this._id = options.id || ++flow._idSeq;
+		flow._nodes[id] = this;
 
-		self._flow = flow;
-		self._x = x;
-		self._y = y;
+		this._flow = flow;
+		this._x = x;
+		this._y = y;
 
-		self._initGraph();
-		self._addListeners();
+		this._initGraph();
+		this._addListeners();
 
-		self._ensurePos();
+		this._ensurePos();
 
-		return self;
+		return this;
 	}
 
 	_remove() {
-		let self = this;
-		let flow = self._flow;
+		let flow = this._flow;
 
-		self._removeListeners();
-		self._graph.remove();
+		this._removeListeners();
+		this._graph.remove();
 
-		delete flow._nodes[self._id];
+		delete flow._nodes[this._id];
 
-		self._flow.emit({
+		this._flow.emit({
 			type: 'nodeRemoved',
 			data: {
-				obj: self,
+				obj: this,
 			}
 		});
 	}
 
 	_initGraph() {
-		let self = this;
-		let options = self._options;
+		let options = this._options;
 
-		let g = self._graph = DomUtil.createSVG('g', 'fm-node');
+		let g = this._graph = DomUtil.createSVG('g', 'fm-node');
 
 		// draggable graph, including background and icon
-		let draggable = self._graphDraggable = DomUtil.createSVG('g', 'fm-node-draggable', g);
+		let draggable = this._graphDraggable = DomUtil.createSVG('g', 'fm-node-draggable', g);
 		draggable.setAttribute('cursor', 'pointer');
 
 		// background
-		let bg = self._graphBg = DomUtil.createSVG('rect', 'fm-node-bg', draggable);
+		let bg = this._graphBg = DomUtil.createSVG('rect', 'fm-node-bg', draggable);
 		bg.setAttribute('x', -options.bgSize / 2);
 		bg.setAttribute('y', -options.bgSize / 2);
 		bg.setAttribute('width', options.bgSize);
@@ -183,7 +176,7 @@ export default class Node {
 
 		// icon
 		if (options.icon) {
-			let icon = self._graphIcon = DomUtil.createSVG('image', 'fm-node-icon', draggable);
+			let icon = this._graphIcon = DomUtil.createSVG('image', 'fm-node-icon', draggable);
 			icon.setAttribute('x', options.bgRadius - options.bgSize / 2);
 			icon.setAttribute('y', options.bgRadius - options.bgSize / 2);
 			icon.setAttribute('width', options.bgSize - 2 * options.bgRadius);
@@ -193,7 +186,7 @@ export default class Node {
 		}
 
 		// name
-		let name = self._graphName = DomUtil.createSVG('text', 'fm-node-name', g);
+		let name = this._graphName = DomUtil.createSVG('text', 'fm-node-name', g);
 		name.innerHTML = options.name;
 		name.setAttribute('x', 0);
 		name.setAttribute('y', -options.bgSize / 2 - options.gap);
@@ -204,17 +197,17 @@ export default class Node {
 		name.setAttribute('cursor', 'default');
 
 		// desc
-		let desc = self._graphDesc = DomUtil.createSVG('text', 'fm-node-desc', g);
+		let desc = this._graphDesc = DomUtil.createSVG('text', 'fm-node-desc', g);
 		desc.innerHTML = options.desc;
 		desc.setAttribute('x', 0);
-		desc.setAttribute('y', options.bgSize / 2 + options.gap * 3);
+		desc.setAttribute('y', options.bgSize / 2 + options.gap * 2);
 		desc.setAttribute('font-size', options.descSize);
 		desc.setAttribute('text-anchor', 'middle');
 		desc.setAttribute('alignment-baseline', 'text-before-edge');
 		desc.setAttribute('cursor', 'default');
 
 		// status
-		let status = self._graphStatus = DomUtil.createSVG('rect', 'fm-node-status', g);
+		let status = this._graphStatus = DomUtil.createSVG('rect', 'fm-node-status', g);
 		status.setAttribute('x', -options.bgSize / 2);
 		status.setAttribute('y', options.bgSize / 2 + options.gap);
 		status.setAttribute('width', options.bgSize);
@@ -226,7 +219,7 @@ export default class Node {
 		status.setAttribute('stroke-width', options.statusOutlineWidth);
 
 		// progress
-		let progress = self._graphProgress = DomUtil.createSVG('rect', 'fm-node-progress', g);
+		let progress = this._graphProgress = DomUtil.createSVG('rect', 'fm-node-progress', g);
 		progress.setAttribute('x', -options.bgSize / 2 + options.statusOutlineWidth);
 		progress.setAttribute('y', options.bgSize / 2 + options.gap + options.statusOutlineWidth);
 		progress.setAttribute('width', 0);
@@ -245,9 +238,9 @@ export default class Node {
 			for (let i = 0; i < leftPortsCount; i++) {
 				let portOptions = options.leftPorts[i];
 
-				let anchor = self._calcPortAnchor(portOptions, i, -options.bgSize / 2, sideLen, sideSpacing);
+				let anchor = this._calcPortAnchor(portOptions, i, -options.bgSize / 2, sideLen, sideSpacing);
 				let port = new Port(portOptions);
-				port._addToNode(self, `l-${i}`, anchor);
+				port._addToNode(this, `l-${i}`, anchor);
 			}
 		}
 
@@ -258,51 +251,45 @@ export default class Node {
 			for (let i = 0; i < rightPortsCount; i++) {
 				let portOptions = options.rightPorts[i];
 
-				let anchor = self._calcPortAnchor(portOptions, i, options.bgSize / 2, sideLen, sideSpacing);
+				let anchor = this._calcPortAnchor(portOptions, i, options.bgSize / 2, sideLen, sideSpacing);
 				let port = new Port(portOptions);
-				port._addToNode(self, `r-${i}`, anchor);
+				port._addToNode(this, `r-${i}`, anchor);
 			}
 		}
 
 
-		let flow = self._flow;
+		let flow = this._flow;
 		flow._graph.appendChild(g);
 	}
 
 	_addListeners() {
-		let self = this;
-
-		let g = self._graphDraggable;
-		DomUtil.addListener(g, 'mousedown', self._onGraphMouseDown, self);
-		DomUtil.addListener(g, 'click', self._onGraphClick, self);
+		let g = this._graphDraggable;
+		DomUtil.addListener(g, 'mousedown', this._onGraphMouseDown, this);
+		DomUtil.addListener(g, 'click', this._onGraphClick, this);
 	}
 
 	_removeListeners() {
-		let self = this;
-
-		let g = self._graphDraggable;
-		DomUtil.removeListener(g, 'mousedown', self._onGraphMouseDown, self);
-		DomUtil.removeListener(g, 'click', self._onGraphClick, self);
+		let g = this._graphDraggable;
+		DomUtil.removeListener(g, 'mousedown', this._onGraphMouseDown, this);
+		DomUtil.removeListener(g, 'click', this._onGraphClick, this);
 	}
 
-	_snapToGrid(gridSize) {
-		let self = this;
+	_snapToGrid(gridWidth, gridHeight) {
+		let oldX = this._x;
+		let oldY = this._y;
 
-		let oldX = self._x;
-		let oldY = self._y;
-
-		let modX = oldX % gridSize;
-		let modY = oldY % gridSize;
+		let modX = (oldX - gridWidth / 2) % gridWidth;
+		let modY = (oldY - gridHeight / 2) % gridHeight;
 
 		if (modX !== 0 || modY !== 0) {
-			let dx = modX < (gridSize - modX) ? -modX : gridSize - modX;
-			let dy = modY < (gridSize - modY) ? -modY : gridSize - modY;
+			let dx = modX < (gridWidth - modX) ? -modX : gridWidth - modX;
+			let dy = modY < (gridHeight - modY) ? -modY : gridHeight - modY;
 
-			self._x = oldX + dx;
-			self._y = oldY + dy;
-			self._ensurePos();
+			this._x = oldX + dx;
+			this._y = oldY + dy;
+			this._ensurePos();
 
-			self._flow.emit({ type: 'nodeMove', data: { id: self._id } });
+			this._flow.emit({ type: 'nodeMove', data: { id: this._id } });
 		}
 	}
 
@@ -311,18 +298,15 @@ export default class Node {
 	}
 
 	_getPortAnchor(portId) {
-		let self = this;
-
-		let port = self._ports[portId];
+		let port = this._ports[portId];
 		if (port) {
 			let anchor = port._anchor;
-			return [anchor[0] + self._x, anchor[1] + self._y];
+			return [anchor[0] + this._x, anchor[1] + this._y];
 		}
 	}
 
 	_calcPortAnchor(portOptions, sideIdx, sideX, sideLen, sideSpacing) {
-		let self = this;
-		let options = self._options;
+		let options = this._options;
 
 		let anchorX = sideX;
 		switch (portOptions.type) {
@@ -347,101 +331,87 @@ export default class Node {
 			return;
 		}
 
-		let self = this;
+		let g = this._flow._graph;
+		DomUtil.addListener(g, 'mousemove', this._onGraphMouseMove, this);
+		DomUtil.addListener(g, 'mouseup', this._onGraphMouseUp, this);
 
-		let g = self._flow._graph;
-		DomUtil.addListener(g, 'mousemove', self._onGraphMouseMove, self);
-		DomUtil.addListener(g, 'mouseup', self._onGraphMouseUp, self);
+		this._dragStartX = this._x;
+		this._dragStartY = this._y;
+		this._dragStartEvent = e;
 
-		self._dragStartX = self._x;
-		self._dragStartY = self._y;
-		self._dragStartEvent = e;
-
-		self._graphDraggable.setAttribute('cursor', 'move');
+		this._graphDraggable.setAttribute('cursor', 'move');
 	}
 
 	_onGraphMouseMove(e) {
 		e.stopPropagation();
 
-		let self = this;
+		this._x = this._dragStartX + e.offsetX - this._dragStartEvent.offsetX;
+		this._y = this._dragStartY + e.offsetY - this._dragStartEvent.offsetY;
 
-		self._x = self._dragStartX + e.offsetX - self._dragStartEvent.offsetX;
-		self._y = self._dragStartY + e.offsetY - self._dragStartEvent.offsetY;
+		this._ensurePos();
 
-		self._ensurePos();
-
-		self._flow.emit({ type: 'nodeMove', data: { id: self._id } });
+		this._flow.emit({ type: 'nodeMove', data: { id: this._id } });
 	}
 
 	_onGraphMouseUp(e) {
 		e.stopPropagation();
 
-		let self = this;
+		let g = this._flow._graph;
+		DomUtil.removeListener(g, 'mousemove', this._onGraphMouseMove, this);
+		DomUtil.removeListener(g, 'mouseup', this._onGraphMouseUp, this);
 
-		let g = self._flow._graph;
-		DomUtil.removeListener(g, 'mousemove', self._onGraphMouseMove, self);
-		DomUtil.removeListener(g, 'mouseup', self._onGraphMouseUp, self);
-
-		self._graphDraggable.setAttribute('cursor', 'pointer');
+		this._graphDraggable.setAttribute('cursor', 'pointer');
 	}
 
 	_onGraphClick(e) {
 		e.stopPropagation();
 
-		let self = this;
+		this._updateSelected(true);
 
-		self._updateSelected(true);
-
-		self._flow.emit({
+		this._flow.emit({
 			type: 'objSelected',
 			data: {
 				cls: 'Node',
-				obj: self,
+				obj: this,
 			}
 		});
 	}
 
 	_onPortMouseDown(e) {
-		let self = this;
+		let g = this._flow._graph;
+		DomUtil.addListener(g, 'mousemove', this._onPortMouseMove, this);
+		DomUtil.addListener(g, 'mouseup', this._onPortMouseUp, this);
 
-		let g = self._flow._graph;
-		DomUtil.addListener(g, 'mousemove', self._onPortMouseMove, self);
-		DomUtil.addListener(g, 'mouseup', self._onPortMouseUp, self);
+		this._dragStartX = this._x;
+		this._dragStartY = this._y;
+		this._dragStartEvent = e;
 
-		self._dragStartX = self._x;
-		self._dragStartY = self._y;
-		self._dragStartEvent = e;
-
-		self._graphDraggable.setAttribute('cursor', 'move');
+		this._graphDraggable.setAttribute('cursor', 'move');
 	}
 
 	_ensurePos() {
-		let self = this;
-
-		let g = self._graph;
-		g.setAttribute('transform', `translate(${self._x} ${self._y})`);
+		let g = this._graph;
+		g.setAttribute('transform', `translate(${this._x} ${this._y})`);
 	}
 
 	_updateProgress(v) {
-		let self = this;
-		let options = self._options;
+		let options = this._options;
 
 		// progress should be [0, 100]
-		let progress = self._progress = v < 0 ? 0 : Math.min(v, 100);
+		let progress = this._progress = v < 0 ? 0 : Math.min(v, 100);
 		let w = options.bgSize - 2 * options.statusOutlineWidth;
 
-		let graphProgress = self._graphProgress;
+		let graphProgress = this._graphProgress;
 		graphProgress.setAttribute('width', w * progress / 100);
 	}
 
 	_updateStatus(status) {
-		let self = this;
-		let options = self._options;
+		let options = this._options;
 
-		let graphStatus = self._graphStatus;
-		let graphProgress = self._graphProgress;
+		let graphStatus = this._graphStatus;
+		let graphProgress = this._graphProgress;
 
-		self._status = status;
+		this._status = status;
 		if (status == 'running') { // show progress if status is running
 			graphStatus.setAttribute('fill', 'none');
 			graphProgress.setAttribute('fill', options.runningColor);
@@ -464,12 +434,10 @@ export default class Node {
 	}
 
 	_updateSelected(flag) {
-		let self = this;
+		let options = this._options;
+		let bg = this._graphBg;
 
-		let options = self._options;
-		let bg = self._graphBg;
-
-		self._selected = flag;
+		this._selected = flag;
 		if (flag) {
 			bg.setAttribute('stroke', options.selectedColor);
 			bg.setAttribute('stroke-width', options.selectedWidth);

@@ -1,61 +1,56 @@
 import DomUtil from '../util/DomUtil';
 import Validator from './Validator';
 
+const DEFAULT_OPTIONS = {
+	connectingColor: '#aaa',
+	connectingOpacity: 0.8,
+	connectingDash: '4 8',
+};
+
 export default class Temp {
 
 	constructor(options = {}) {
-		let self = this;
-
-		self._options = Object.assign({
-			connectingColor: '#aaa',
-			connectingOpacity: 0.8,
-			connectingDash: '4 8',
-		}, options);
+		this._options = Object.assign({}, DEFAULT_OPTIONS, options);
 	}
 
 	_addToFlow(flow) {
-		let self = this;
-
-		if (self._flow) {
+		if (this._flow) {
 			throw new Error(`Temp layer is already in a flow`);
 			return;
 		}
 
-		flow._temp = self;
-		self._flow = flow;
+		flow._temp = this;
+		this._flow = flow;
 
-		self._initGraph();
-		self._addListeners();
+		this._initGraph();
+		this._addListeners();
 
-		return self;
+		return this;
 	}
 
 	_initGraph() {
-		let self = this;
-		let options = self._options;
+		let options = this._options;
 
-		let flow = self._flow;
-		let g = self._graph = DomUtil.createSVG('g', 'fm-temp', flow._graph);
+		let flow = this._flow;
+		let g = this._graph = DomUtil.createSVG('g', 'fm-temp', flow._graph);
 	}
 
 	_addListeners() {
-		let self = this;
-		let flow = self._flow;
+		let flow = this._flow;
 
-		flow.on('portMouseDown', self._onConnectStart, self);
-		flow.on('portMouseOver', self._onOverPort, self);
-		flow.on('portMouseOut', self._onLeavePort, self);
+		flow.on('portMouseDown', this._onConnectStart, this);
+		flow.on('portMouseOver', this._onOverPort, this);
+		flow.on('portMouseOut', this._onLeavePort, this);
 	}
 
 	_onConnectStart(e) {
-		let self = this;
-		let flow = self._flow;
+		let flow = this._flow;
 
 		let { nodeId, portId, x, y } = e.data;
 		if (nodeId && portId) {
 			let node = flow.getNode(nodeId);
 			let anchor = node && node._getPortAnchor(portId);
-			self._connectStartData = {
+			this._connectStartData = {
 				nodeId,
 				portId,
 				x: anchor ? anchor[0] : x,
@@ -63,10 +58,10 @@ export default class Temp {
 			};
 		}
 
-		let options = self._options;
-		let g = self._graph;
+		let options = this._options;
+		let g = this._graph;
 
-		let connectingGraph = self._connectingGraph = self._connectingGraph || DomUtil.createSVG('path', 'fm-connecting', g);
+		let connectingGraph = this._connectingGraph = this._connectingGraph || DomUtil.createSVG('path', 'fm-connecting', g);
 		connectingGraph.setAttribute('stroke', options.connectingColor);
 		connectingGraph.setAttribute('stroke-opacity', options.connectingOpacity);
 		connectingGraph.setAttribute('stroke-width', 2);
@@ -74,16 +69,14 @@ export default class Temp {
 		connectingGraph.setAttribute('d', `M ${x},${y} L ${x},${y}`);
 
 		let flowGraph = flow._graph;
-		DomUtil.addListener(flowGraph, 'mousemove', self._onFlowGraphMouseMove, self);
-		DomUtil.addListener(flowGraph, 'mouseup', self._onFlowGraphMouseUp, self);
+		DomUtil.addListener(flowGraph, 'mousemove', this._onFlowGraphMouseMove, this);
+		DomUtil.addListener(flowGraph, 'mouseup', this._onFlowGraphMouseUp, this);
 	}
 
 	_onFlowGraphMouseMove(e) {
 		e.stopPropagation();
 
-		let self = this;
-
-		let startData = self._connectStartData;
+		let startData = this._connectStartData;
 		if (!startData) {
 			return;
 		}
@@ -91,34 +84,32 @@ export default class Temp {
 		let fromX = startData.x;
 		let fromY = startData.y;
 
-		let flow = self._flow;
+		let flow = this._flow;
 		let toX = e.offsetX - flow._x;
 		let toY = e.offsetY - flow._y;
 
-		let connectingGraph = self._connectingGraph;
+		let connectingGraph = this._connectingGraph;
 		connectingGraph.setAttribute('d', `M ${fromX},${fromY} L ${toX},${toY}`);
 	}
 
 	_onFlowGraphMouseUp(e) {
 		e.stopPropagation();
 
-		let self = this;
-
-		let startData = self._connectStartData;
+		let startData = this._connectStartData;
 		if (!startData) {
 			return;
 		}
 
-		let flow = self._flow;
+		let flow = this._flow;
 
 		let flowGraph = flow._graph;
-		DomUtil.removeListener(flowGraph, 'mousemove', self._onFlowGraphMouseMove, self);
-		DomUtil.removeListener(flowGraph, 'mouseup', self._onFlowGraphMouseUp, self);
+		DomUtil.removeListener(flowGraph, 'mousemove', this._onFlowGraphMouseMove, this);
+		DomUtil.removeListener(flowGraph, 'mouseup', this._onFlowGraphMouseUp, this);
 
-		self._connectingGraph.remove();
-		delete self._connectingGraph;
+		this._connectingGraph.remove();
+		delete this._connectingGraph;
 
-		let overEvent = self._connectOverEvent;
+		let overEvent = this._connectOverEvent;
 		if (overEvent) {
 			let fromNodeId = startData.nodeId;
 			let fromPortId = startData.portId;
@@ -128,40 +119,37 @@ export default class Temp {
 			flow.connect(fromNodeId, fromPortId, toNodeId, toPortId);
 		}
 
-		delete self._connectStartData;
+		delete this._connectStartData;
 	}
 
 	_onOverPort(e) {
-		let self = this;
-		let options = self._options;
+		let options = this._options;
 
-		let startData = self._connectStartData;
+		let startData = this._connectStartData;
 		if (!startData) {
 			return;
 		}
 
-		self._connectOverEvent = e;
+		this._connectOverEvent = e;
 
 		let fromNodeId = startData.nodeId;
 		let fromPortId = startData.portId;
 		let toNodeId = e.data.nodeId;
 		let toPortId = e.data.portId;
 
-		let flow = self._flow;
+		let flow = this._flow;
 		let connectable = Validator.isConnectable(flow, fromNodeId, fromPortId, toNodeId, toPortId);
-		let connectingGraph = self._connectingGraph;
+		let connectingGraph = this._connectingGraph;
 		connectingGraph && connectingGraph.setAttribute('stroke-dasharray', connectable ? '' : options.connectingDash);
 	}
 
 	_onLeavePort(e) {
-		let self = this;
-
-		let overEvent = self._connectOverEvent;
+		let overEvent = this._connectOverEvent;
 		if (overEvent && overEvent.data.nodeId == e.data.nodeId && overEvent.data.portId == e.data.portId) {
-			delete self._connectOverEvent;
+			delete this._connectOverEvent;
 
-			let options = self._options;
-			let connectingGraph = self._connectingGraph;
+			let options = this._options;
+			let connectingGraph = this._connectingGraph;
 			connectingGraph && connectingGraph.setAttribute('stroke-dasharray', options.connectingDash);
 		}
 	}

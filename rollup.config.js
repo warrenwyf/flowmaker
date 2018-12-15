@@ -1,6 +1,7 @@
 import json from 'rollup-plugin-json';
 import resolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
+import { terser } from "rollup-plugin-terser";
 import { name, version, author } from './package.json';
 
 const banner =
@@ -10,17 +11,26 @@ const banner =
 	` * Released under the Apache-2.0 License.\n` +
 	` */`;
 
-export default {
-	input: 'src/main.js',
-	output: {
-		file: 'dist/flowmaker.js',
-		format: 'umd',
-		name,
-		banner,
-	},
-	plugins: [
+export default commandLineArgs => {
+	const release = (commandLineArgs.environment === 'BUILD:production');
+
+	let plugins = [
 		json(),
 		resolve(),
 		babel(),
-	],
-};
+	];
+	if (release) {
+		plugins.push(terser());
+	}
+
+	return {
+		input: 'src/main.js',
+		output: {
+			file: 'dist/flowmaker' + (release ? '.min.js' : '.js'),
+			format: 'umd',
+			name,
+			banner,
+		},
+		plugins,
+	};
+}

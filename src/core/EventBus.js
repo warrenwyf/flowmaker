@@ -3,26 +3,22 @@ const LISTENERS_KEY = '__fm_listeners__';
 export default class EventBus {
 
 	on(type, callback, context) {
-		let self = this;
-
 		let listener = {
 			callback,
-			context: context || self,
+			context: context || this,
 		};
 
-		let allListeners = self[LISTENERS_KEY] = self[LISTENERS_KEY] || {};
+		let allListeners = this[LISTENERS_KEY] = this[LISTENERS_KEY] || {};
 		allListeners[type] = allListeners[type] || [];
 		allListeners[type].push(listener);
 
-		return self;
+		return this;
 	}
 
 	off(type, callback, context) {
-		let self = this;
-
-		let allListeners = self[LISTENERS_KEY];
+		let allListeners = this[LISTENERS_KEY];
 		if (!allListeners) {
-			return self;
+			return this;
 		}
 
 		if (!callback) {
@@ -38,15 +34,13 @@ export default class EventBus {
 			}
 		}
 
-		return self;
+		return this;
 	}
 
 	emit(event) {
-		let self = this;
-
 		if (!event || !event.type) {
 			throw new Error('Not an event');
-			return self;
+			return this;
 		}
 
 		event.cancel = function() {
@@ -54,7 +48,7 @@ export default class EventBus {
 			return this;
 		};
 
-		let allListeners = self[LISTENERS_KEY] || {};
+		let allListeners = this[LISTENERS_KEY] || {};
 		let listeners = allListeners[event.type] || [];
 		let listener, callback;
 
@@ -68,7 +62,7 @@ export default class EventBus {
 			listener.callback.call(listener.context, event);
 		}
 
-		return self;
+		return this;
 	}
 
 

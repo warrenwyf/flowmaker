@@ -10,29 +10,25 @@ const DEFAULT_OPTIONS = {
 export default class Link {
 
 	constructor(fromNodeId, fromPortId, toNodeId, toPortId, options = {}) {
-		let self = this;
+		this._options = Object.assign({}, DEFAULT_OPTIONS, options);
 
-		self._options = Object.assign({}, DEFAULT_OPTIONS, options);
-
-		self._fromNodeId = fromNodeId;
-		self._fromPortId = fromPortId;
-		self._toNodeId = toNodeId;
-		self._toPortId = toPortId;
+		this._fromNodeId = fromNodeId;
+		this._fromPortId = fromPortId;
+		this._toNodeId = toNodeId;
+		this._toPortId = toPortId;
 	}
 
 	exportToObject() {
-		let self = this;
-
 		let obj = {
 			options: {},
-			fromNodeId: self._fromNodeId,
-			fromPortId: self._fromPortId,
-			toNodeId: self._toNodeId,
-			toPortId: self._toPortId,
+			fromNodeId: this._fromNodeId,
+			fromPortId: this._fromPortId,
+			toNodeId: this._toNodeId,
+			toPortId: this._toPortId,
 		};
 
-		for (let k in self._options) {
-			let v = self._options[k];
+		for (let k in this._options) {
+			let v = this._options[k];
 			if (v !== DEFAULT_OPTIONS[k]) {
 				obj.options[k] = v;
 			}
@@ -46,10 +42,8 @@ export default class Link {
 	}
 
 	unselect() {
-		let self = this;
-
-		self._updateSelected(false);
-		return self;
+		this._updateSelected(false);
+		return this;
 	}
 
 	remove() {
@@ -57,109 +51,100 @@ export default class Link {
 	}
 
 	_getFromKey() {
-		let self = this;
-		return `${self._fromNodeId}:${self._fromPortId}`;
+		return `${this._fromNodeId}:${this._fromPortId}`;
 	}
 
 	_getToKey() {
-		let self = this;
-		return `${self._toNodeId}:${self._toPortId}`;
+		return `${this._toNodeId}:${this._toPortId}`;
 	}
 
 	_addToFlow(flow) {
-		let self = this;
-
-		if (self._flow) {
-			throw new Error(`Link<${self._id}> is already in a flow`);
+		if (this._flow) {
+			throw new Error(`Link<${this._id}> is already in a flow`);
 			return;
 		}
 
-		let fromKey = self._getFromKey();
-		let toKey = self._getToKey();
+		let fromKey = this._getFromKey();
+		let toKey = this._getToKey();
 
 		flow._linksByFrom[fromKey] = flow._linksByFrom[fromKey] || {};
-		flow._linksByFrom[fromKey][toKey] = self; // one fromPort can connect many toPort
+		flow._linksByFrom[fromKey][toKey] = this; // one fromPort can connect many toPort
 		flow._linksByTo[toKey] && flow._linksByTo[toKey]._remove();
-		flow._linksByTo[toKey] = self; // one toPort can only be connected by one fromPort
+		flow._linksByTo[toKey] = this; // one toPort can only be connected by one fromPort
 
-		self._flow = flow;
+		this._flow = flow;
 
-		self._initGraph();
-		self._addListeners();
+		this._initGraph();
+		this._addListeners();
 
-		self._ensureShape();
+		this._ensureShape();
 
-		return self;
+		return this;
 	}
 
 	_remove() {
-		let self = this;
-		let flow = self._flow;
+		let flow = this._flow;
 
-		self._removeListeners();
-		self._graph.remove();
+		this._removeListeners();
+		this._graph.remove();
 
-		let fromKey = self._getFromKey();
-		let toKey = self._getToKey();
+		let fromKey = this._getFromKey();
+		let toKey = this._getToKey();
 
 		if (toKey in flow._linksByFrom[fromKey]) {
 			delete flow._linksByFrom[fromKey][toKey];
 		}
 		delete flow._linksByTo[toKey];
 
-		self._flow.emit({
+		this._flow.emit({
 			type: 'linkRemoved',
 			data: {
-				obj: self,
+				obj: this,
 			}
 		});
 	}
 
 	_initGraph() {
-		let self = this;
-		let options = self._options;
+		let options = this._options;
 
-		let g = self._graph = DomUtil.createSVG('path', 'fm-link');
+		let g = this._graph = DomUtil.createSVG('path', 'fm-link');
 		g.setAttribute('cursor', 'pointer');
 		g.setAttribute('fill', 'none');
 		g.setAttribute('stroke', options.color);
 		g.setAttribute('stroke-width', options.width);
 
-		let flow = self._flow;
+		let flow = this._flow;
 		flow._graph.appendChild(g);
 	}
 
 	_onGraphClick(e) {
 		e.stopPropagation();
 
-		let self = this;
+		this._updateSelected(true);
 
-		self._updateSelected(true);
-
-		self._flow.emit({
+		this._flow.emit({
 			type: 'objSelected',
 			data: {
 				cls: 'Link',
-				obj: self,
+				obj: this,
 			}
 		});
 	}
 
 	_ensureShape() {
-		let self = this;
-		let flow = self._flow;
+		let flow = this._flow;
 
-		let fromNode = flow.getNode(self._fromNodeId);
-		let toNode = flow.getNode(self._toNodeId);
+		let fromNode = flow.getNode(this._fromNodeId);
+		let toNode = flow.getNode(this._toNodeId);
 
 		if (!fromNode || !toNode) {
 			return;
 		}
 
-		let [fromX, fromY] = fromNode._getPortAnchor(self._fromPortId);
-		let [toX, toY] = toNode._getPortAnchor(self._toPortId);
+		let [fromX, fromY] = fromNode._getPortAnchor(this._fromPortId);
+		let [toX, toY] = toNode._getPortAnchor(this._toPortId);
 
-		let g = self._graph;
+		let g = this._graph;
 		if (toX > fromX) {
 			let midX = (fromX + toX) / 2;
 			g.setAttribute('d', `M ${fromX},${fromY} C ${midX},${fromY} ${midX},${toY} ${toX},${toY}`);
@@ -173,12 +158,10 @@ export default class Link {
 	}
 
 	_updateSelected(flag) {
-		let self = this;
+		let options = this._options;
+		let g = this._graph;
 
-		let options = self._options;
-		let g = self._graph;
-
-		self._selected = flag;
+		this._selected = flag;
 		if (flag) {
 			g.setAttribute('stroke', options.selectedColor);
 			g.setAttribute('stroke-width', options.width * 1.5);
@@ -189,49 +172,42 @@ export default class Link {
 	}
 
 	_addListeners() {
-		let self = this;
+		let g = this._graph;
+		DomUtil.addListener(g, 'click', this._onGraphClick, this);
 
-		let g = self._graph;
-		DomUtil.addListener(g, 'click', self._onGraphClick, self);
-
-		let flow = self._flow;
-		flow.on('nodeMove', self._onNodeMove, self);
-		flow.on('nodeRemoved', self._onNodeRemoved, self);
+		let flow = this._flow;
+		flow.on('nodeMove', this._onNodeMove, this);
+		flow.on('nodeRemoved', this._onNodeRemoved, this);
 	}
 
 	_removeListeners() {
-		let self = this;
+		let g = this._graph;
+		DomUtil.removeListener(g, 'click', this._onGraphClick, this);
 
-		let g = self._graph;
-		DomUtil.removeListener(g, 'click', self._onGraphClick, self);
-
-		let flow = self._flow;
-		flow.off('nodeMove', self._onNodeMove, self);
+		let flow = this._flow;
+		flow.off('nodeMove', this._onNodeMove, this);
 	}
 
 	_onNodeMove(e) {
-		let self = this;
-		let flow = self._flow;
+		let flow = this._flow;
 
 		// Update if the node is relative
 		let nodeId = e.data.id;
-		if (self._fromNodeId == nodeId || self._toNodeId == nodeId) {
-			self._ensureShape();
+		if (this._fromNodeId == nodeId || this._toNodeId == nodeId) {
+			this._ensureShape();
 		}
 	}
 
 	_onNodeRemoved(e) { // related Links should be removed too
-		let self = this;
-
 		let node = e.data.obj;
 
-		if (node._id != self._toNodeId) {
+		if (node._id != this._toNodeId) {
 			return;
 		}
 
 		for (let portId in node._ports) {
-			if (portId === self._toPortId) {
-				self._remove();
+			if (portId === this._toPortId) {
+				this._remove();
 				return;
 			}
 		}

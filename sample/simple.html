@@ -86,8 +86,9 @@
 	<div id="flow" ondragover="onProcessorDragOver(event)" ondrop="onProcessorDrop(event)"></div>
 
 	<div id="buttons">
-		<button onclick="onRunClick()">Run</button>
-		<button onclick="onStopClick()">Stop</button>
+		<button onclick="onRunClick()">▶︎ Run</button>
+		<button onclick="onStopClick()">◼︎ Stop</button>
+		<button onclick="onLayoutClick()">Auto Layout</button>
 	</div>
 
 	<script type="text/javascript" src="../dist/flowmaker.js"></script>
@@ -133,6 +134,10 @@
 		mockServer.stop();
 	}
 
+	function onLayoutClick() {
+		flow.autoLayout();
+	}
+
 	function newUnknownNode() {
 		return new flowmaker.Node({
 			extInfo: { type: 'unknown' },
@@ -162,25 +167,47 @@
 	}
 
 	var nodes1 = [];
-	for (var i = 0; i < 5; i++) {
+	var nodes1Count = 3;
+	for (var i = 0; i < nodes1Count; i++) {
 		var node1 = newUnknownNode();
 		flow.addNode(node1, 200, 200 + 100 * i);
-
 		nodes1.push(node1);
 	}
 
 	var nodes2 = [];
-	for (var i = 0; i < 5; i++) {
+	var nodes2Count = 5;
+	for (var i = 0; i < nodes2Count; i++) {
 		var node2 = newCacheNode();
 		flow.addNode(node2, 400, 200 + 100 * i);
-
 		nodes2.push(node2);
 	}
 
-	for (var i = 0; i < 5; i++) {
-		var rand = parseInt(Math.random() * 5);
+	var nodes3 = [];
+	var nodes3Count = 4;
+	for (var i = 0; i < nodes3Count; i++) {
+		var node3 = newCacheNode();
+		flow.addNode(node3, 600, 200 + 100 * i);
+		nodes3.push(node3);
+	}
 
-		flow.connect(nodes1[rand].getId(), 'r-0', nodes2[i].getId(), 'l-1');
+	var nodes4 = [];
+	var nodes4Count = 6;
+	for (var i = 0; i < nodes4Count; i++) {
+		var node4 = newCacheNode();
+		flow.addNode(node4, 800, 200 + 100 * i);
+		nodes4.push(node4);
+	}
+
+	for (var i = 0; i < nodes2Count; i++) {
+		flow.connect(nodes1[parseInt(Math.random() * nodes1Count)].getId(), 'r-0', nodes2[i].getId(), 'l-' + parseInt(Math.random() * 2));
+	}
+
+	for (var i = 0; i < nodes3Count; i++) {
+		flow.connect(nodes2[parseInt(Math.random() * nodes2Count)].getId(), 'r-0', nodes3[i].getId(), 'l-' + parseInt(Math.random() * 2));
+	}
+
+	for (var i = 0; i < nodes4Count; i++) {
+		flow.connect(nodes3[parseInt(Math.random() * nodes3Count)].getId(), 'r-0', nodes4[i].getId(), 'l-' + parseInt(Math.random() * 2));
 	}
 
 	var mockServer = {

@@ -1,16 +1,16 @@
 import DomUtil from '../util/DomUtil';
 
+const DEFAULT_OPTIONS = {
+	type: 'input', // input | output
+	color: '#000',
+	borderColor: '#000',
+	borderWidth: 1,
+};
+
 export default class Port {
 
 	constructor(options = {}) {
-		let self = this;
-
-		self._options = Object.assign({
-			type: 'input', // input | output
-			color: '#000',
-			borderColor: '#000',
-			borderWidth: 1,
-		}, options);
+		this._options = Object.assign({}, DEFAULT_OPTIONS, options);
 	}
 
 	getType() {
@@ -18,33 +18,30 @@ export default class Port {
 	}
 
 	_addToNode(node, idInNode, anchor) {
-		let self = this;
-
-		if (self._node) {
-			throw new Error(`Port<${self._id}> is already in a node`);
+		if (this._node) {
+			throw new Error(`Port<${this._id}> is already in a node`);
 			return;
 		}
 
-		let id = self._id = idInNode;
-		node._ports[id] = self;
+		let id = this._id = idInNode;
+		node._ports[id] = this;
 
-		self._node = node;
-		self._anchor = anchor;
+		this._node = node;
+		this._anchor = anchor;
 
-		self._initGraph();
-		self._addListeners();
+		this._initGraph();
+		this._addListeners();
 
-		return self;
+		return this;
 	}
 
 	_initGraph() {
-		let self = this;
-		let options = self._options;
-		let nodeOptions = self._node._options;
+		let options = this._options;
+		let nodeOptions = this._node._options;
 
-		let nodeGraph = self._node._graph;
+		let nodeGraph = this._node._graph;
 
-		let g = self._graph = DomUtil.createSVG('polygon', 'fm-node-port', nodeGraph);
+		let g = this._graph = DomUtil.createSVG('polygon', 'fm-node-port', nodeGraph);
 
 		switch (options.type) {
 			case 'input':
@@ -56,7 +53,7 @@ export default class Port {
 				break;
 		}
 
-		let [anchorX, anchorY] = self._anchor;
+		let [anchorX, anchorY] = this._anchor;
 
 		g.setAttribute('transform', `translate(${anchorX} ${anchorY})`);
 		g.setAttribute('fill', options.color);
@@ -68,13 +65,11 @@ export default class Port {
 	}
 
 	_addListeners() {
-		let self = this;
+		let g = this._graph;
 
-		let g = self._graph;
-
-		DomUtil.addListener(g, 'mousedown', self._onGraphMouseDown, self);
-		DomUtil.addListener(g, 'mouseover', self._onGraphMouseOver, self);
-		DomUtil.addListener(g, 'mouseout', self._onGraphMouseOut, self);
+		DomUtil.addListener(g, 'mousedown', this._onGraphMouseDown, this);
+		DomUtil.addListener(g, 'mouseover', this._onGraphMouseOver, this);
+		DomUtil.addListener(g, 'mouseout', this._onGraphMouseOut, this);
 	}
 
 	_onGraphMouseDown(e) {
@@ -85,18 +80,16 @@ export default class Port {
 			return;
 		}
 
-		let self = this;
-		let node = self._node;
-
-		if (self._options.type == 'input') {
+		if (this._options.type == 'input') {
 			return;
 		}
 
+		let node = this._node;
 		node._flow.emit({
 			type: 'portMouseDown',
 			data: {
 				nodeId: node._id,
-				portId: self._id,
+				portId: this._id,
 				x: e.offsetX,
 				y: e.offsetY,
 			}
@@ -106,14 +99,12 @@ export default class Port {
 	_onGraphMouseOver(e) {
 		e.stopPropagation();
 
-		let self = this;
-		let node = self._node;
-
+		let node = this._node;
 		node._flow.emit({
 			type: 'portMouseOver',
 			data: {
 				nodeId: node._id,
-				portId: self._id,
+				portId: this._id,
 				x: e.offsetX,
 				y: e.offsetY,
 			}
@@ -123,14 +114,12 @@ export default class Port {
 	_onGraphMouseOut(e) {
 		e.stopPropagation();
 
-		let self = this;
-		let node = self._node;
-
+		let node = this._node;
 		node._flow.emit({
 			type: 'portMouseOut',
 			data: {
 				nodeId: node._id,
-				portId: self._id,
+				portId: this._id,
 				x: e.offsetX,
 				y: e.offsetY,
 			}

@@ -1,5 +1,6 @@
 import DomUtil from '../util/DomUtil';
 import CommonUtil from '../util/CommonUtil';
+import Layout from '../util/Layout';
 import EventBus from './EventBus';
 import Node from './Node';
 import Link from './Link';
@@ -9,6 +10,8 @@ import JsonReceiver from '../protocol/JsonReceiver';
 
 const DEFAULT_OPTIONS = {
 	fontSize: 12,
+	gridWidth: 180,
+	gridHeight: 120,
 };
 
 export default class Flow extends EventBus {
@@ -16,63 +19,57 @@ export default class Flow extends EventBus {
 	constructor(domId, options = {}) {
 		super();
 
-		let self = this;
-
-		let container = self._container = document.getElementById(domId);
+		let container = this._container = document.getElementById(domId);
 		if (!container) {
 			throw new Error(`DOM with id '${domId}' not found`);
 			return;
 		}
 
-		self._options = Object.assign({}, DEFAULT_OPTIONS, options);
-		self._jsonReceiver = new JsonReceiver(self);
+		this._options = Object.assign({}, DEFAULT_OPTIONS, options);
+		this._jsonReceiver = new JsonReceiver(this);
 
-		self._x = 0;
-		self._y = 0;
+		this._x = 0;
+		this._y = 0;
 
-		self._idSeq = 1;
+		this._idSeq = 1;
 
-		self._nodes = {};
-		self._linksByFrom = {};
-		self._linksByTo = {};
+		this._nodes = {};
+		this._linksByFrom = {};
+		this._linksByTo = {};
 
-		self._initGraph();
-		self._initListeners();
+		this._initGraph();
+		this._initListeners();
 
-		self._ensureSizeAndPos();
+		this._ensureSizeAndPos();
 
 		let temp = new Temp();
-		temp._addToFlow(self);
+		temp._addToFlow(this);
 	}
 
 	clear() {
-		let self = this;
-
-		for (let k in self._links) {
-			let link = self._links[k];
+		for (let k in this._links) {
+			let link = this._links[k];
 			link.remove();
 		}
 
-		for (let k in self._nodes) {
-			let node = self._nodes[k];
+		for (let k in this._nodes) {
+			let node = this._nodes[k];
 			node.remove();
 		}
 	}
 
 	exportToObject() {
-		let self = this;
-
 		let obj = {
 			options: {},
-			x: self._x,
-			y: self._y,
-			idSeq: self._idSeq,
+			x: this._x,
+			y: this._y,
+			idSeq: this._idSeq,
 			nodes: [],
 			links: [],
 		};
 
-		for (let k in self._options) {
-			let v = self._options[k];
+		for (let k in this._options) {
+			let v = this._options[k];
 			if (v !== DEFAULT_OPTIONS[k]) {
 				obj.options[k] = v;
 			}
@@ -82,13 +79,13 @@ export default class Flow extends EventBus {
 			delete obj.options;
 		}
 
-		for (let k in self._nodes) {
-			let node = self._nodes[k];
+		for (let k in this._nodes) {
+			let node = this._nodes[k];
 			obj.nodes.push(node.exportToObject());
 		}
 
-		for (let k in self._links) {
-			let link = self._links[k];
+		for (let k in this._links) {
+			let link = this._links[k];
 			obj.links.push(link.exportToObject());
 		}
 
@@ -96,60 +93,100 @@ export default class Flow extends EventBus {
 	}
 
 	importFromObject(obj) {
-		let self = this;
+		this.clear();
 
-		self.clear();
-
-		self._x = obj.x || 0;
-		self._y = obj.y || 0;
-		self._idSeq = obj.idSeq || 1;
+		this._x = obj.x || 0;
+		this._y = obj.y || 0;
+		this._idSeq = obj.idSeq || 1;
 
 		for (let k in obj.nodes) {
 			let { x, y, options, id } = obj.nodes[k];
 			let node = new Node(options);
-			self.addNode(node, x, y, { id });
+			this.addNode(node, x, y, { id });
 		}
 
 		for (let k in obj.links) {
 			let { fromNodeId, fromPortId, toNodeId, toPortId, options } = obj.links[k];
-			self.connect(fromNodeId, fromPortId, toNodeId, toPortId, options);
+			this.connect(fromNodeId, fromPortId, toNodeId, toPortId, options);
 		}
 
-		self._ensureSizeAndPos();
+		this._ensureSizeAndPos();
 
-		return self;
+		return this;
 	}
 
-	snapToGrid(gridSize = 8) {
-		let self = this;
+	snapToGrid() {
+		let { gridWidth, gridHeight } = this._options;
 
-		if (gridSize > 0) {
-			for (let key in self._nodes) {
-				let node = self._nodes[key];
-				node._snapToGrid(gridSize);
+		for (let key in this._nodes) {
+			let node = this._nodes[key];
+			node._snapToGrid(gridWidth, gridHeight);
+		}
+
+		return this;
+	}
+
+	autoLayout() {
+		let { gridWidth, gridHeight } = this._options;
+
+		// start from nodes which have no leftPort
+		let startNodes = {};
+		for (let i in this._nodes) {
+			let node = this._nodes[i];
+			if (CommonUtil.isEmptyObject(node._options.leftPorts)) {
+				startNodes[node._id] = node;
 			}
 		}
 
-		return self;
+		let occupiedRows = 0;
+		let locatedPositions = {};
+
+		for (let k in startNodes) {
+			let tree = this._genTreeData(startNodes[k]);
+			let layout = new Layout(tree);
+			let positions = layout.calc();
+
+			let minY = Number.MAX_VALUE;
+			let maxY = 0;
+			for (let i in positions) {
+				let pos = positions[i];
+				if (pos.id in locatedPositions) {
+					continue;
+				}
+				locatedPositions[pos.id] = pos;
+
+				minY = Math.min(minY, pos.x);
+				maxY = Math.max(maxY, pos.x);
+
+				let node = this._nodes[pos.id];
+				if (node) {
+					node._x = -this._x + pos.y * gridWidth + 0.5 * gridWidth;
+					node._y = -this._y + pos.x * gridHeight + (occupiedRows + 0.5) * gridHeight;
+					node._ensurePos();
+					this.emit({ type: 'nodeMove', data: { id: node._id } });
+				}
+			}
+
+			occupiedRows += (maxY - minY + 1);
+		}
+
+		return this;
 	}
 
 	addNode(node, x, y, options = {}) {
-		let self = this;
-		node._addToFlow(self, x - self._x, y - self._y, options);
+		node._addToFlow(this, x - this._x, y - this._y, options);
 
 		return node;
 	}
 
 	connect(fromNodeId, fromPortId, toNodeId, toPortId, options) {
-		let self = this;
-
-		let connectable = Validator.isConnectable(self, fromNodeId, fromPortId, toNodeId, toPortId);
+		let connectable = Validator.isConnectable(this, fromNodeId, fromPortId, toNodeId, toPortId);
 		if (!connectable) {
 			return;
 		}
 
 		let link = new Link(fromNodeId, fromPortId, toNodeId, toPortId, options);
-		link._addToFlow(self);
+		link._addToFlow(this);
 
 		return link;
 	}
@@ -159,24 +196,21 @@ export default class Flow extends EventBus {
 	}
 
 	sendCommand(command, protocol = 'json') {
-		let self = this;
-
 		switch (protocol) {
 			case 'json':
-				self._jsonReceiver.handle(command);
+				this._jsonReceiver.handle(command);
 				break;
 		}
 	}
 
 	_initGraph() {
-		let self = this;
-		let options = self._options;
+		let options = this._options;
 
-		let container = self._container;
+		let container = this._container;
 		container.style.position = 'relative';
 		container.style.userSelect = 'none';
 
-		let g = self._graph = DomUtil.createSVG('svg', 'fm-flow', container);
+		let g = this._graph = DomUtil.createSVG('svg', 'fm-flow', container);
 		g.setAttribute('shape-rendering', 'auto');
 		g.setAttribute('text-rendering', 'auto');
 		g.setAttribute('color-rendering', 'auto');
@@ -191,27 +225,23 @@ export default class Flow extends EventBus {
 	}
 
 	_ensureSizeAndPos() {
-		let self = this;
-
-		let container = self._container;
+		let container = this._container;
 		let w = container.offsetWidth;
 		let h = container.offsetHeight;
 
-		let g = self._graph;
-		g.setAttribute('viewBox', [-self._x, -self._y, w, h].join(' '));
+		let g = this._graph;
+		g.setAttribute('viewBox', [-this._x, -this._y, w, h].join(' '));
 	}
 
 	_initListeners() {
-		let self = this;
+		DomUtil.addListener(window, 'resize', this._onWindowResize, this);
+		DomUtil.addListener(window, 'keydown', this._onWindowKeyDown, this);
 
-		DomUtil.addListener(window, 'resize', self._onWindowResize, self);
-		DomUtil.addListener(window, 'keydown', self._onWindowKeyDown, self);
+		let g = this._graph;
+		DomUtil.addListener(g, 'mousedown', this._onGraphMouseDown, this);
+		DomUtil.addListener(g, 'click', this._onGraphClick, this);
 
-		let g = self._graph;
-		DomUtil.addListener(g, 'mousedown', self._onGraphMouseDown, self);
-		DomUtil.addListener(g, 'click', self._onGraphClick, self);
-
-		self.on('objSelected', self._onObjSelected);
+		this.on('objSelected', this._onObjSelected);
 	}
 
 	_onWindowResize(e) {
@@ -219,16 +249,14 @@ export default class Flow extends EventBus {
 	}
 
 	_onWindowKeyDown(e) {
-		let self = this;
-
 		if (e.which == 8 /*Backspace*/ || e.which == 46 /*Del*/ ) {
-			let selectedObj = self._selectedObj;
+			let selectedObj = this._selectedObj;
 			if (selectedObj) {
 				if (selectedObj.remove instanceof Function) {
 					selectedObj.remove();
 				}
 
-				delete self._selectedObj;
+				delete this._selectedObj;
 			}
 		}
 	}
@@ -241,15 +269,14 @@ export default class Flow extends EventBus {
 			return;
 		}
 
-		let self = this;
 
-		let g = self._graph;
-		DomUtil.addListener(g, 'mousemove', self._onGraphMouseMove, self);
-		DomUtil.addListener(g, 'mouseup', self._onGraphMouseUp, self);
+		let g = this._graph;
+		DomUtil.addListener(g, 'mousemove', this._onGraphMouseMove, this);
+		DomUtil.addListener(g, 'mouseup', this._onGraphMouseUp, this);
 
-		self._dragStartX = self._x;
-		self._dragStartY = self._y;
-		self._dragStartEvent = e;
+		this._dragStartX = this._x;
+		this._dragStartY = this._y;
+		this._dragStartEvent = e;
 
 		g.setAttribute('cursor', 'move');
 	}
@@ -257,42 +284,35 @@ export default class Flow extends EventBus {
 	_onGraphMouseMove(e) {
 		e.stopPropagation();
 
-		let self = this;
 
-		self._x = self._dragStartX + e.offsetX - self._dragStartEvent.offsetX;
-		self._y = self._dragStartY + e.offsetY - self._dragStartEvent.offsetY;
+		this._x = this._dragStartX + e.offsetX - this._dragStartEvent.offsetX;
+		this._y = this._dragStartY + e.offsetY - this._dragStartEvent.offsetY;
 
-		self._ensureSizeAndPos();
+		this._ensureSizeAndPos();
 	}
 
 	_onGraphMouseUp(e) {
 		e.stopPropagation();
 
-		let self = this;
+		let g = this._graph;
+		DomUtil.removeListener(g, 'mousemove', this._onGraphMouseMove, this);
+		DomUtil.removeListener(g, 'mouseup', this._onGraphMouseUp, this);
 
-		let g = self._graph;
-		DomUtil.removeListener(g, 'mousemove', self._onGraphMouseMove, self);
-		DomUtil.removeListener(g, 'mouseup', self._onGraphMouseUp, self);
-
-		self._graph.setAttribute('cursor', 'default');
+		this._graph.setAttribute('cursor', 'default');
 	}
 
 	_onGraphClick(e) {
 		e.stopPropagation();
 
-		let self = this;
-
-		self.emit({
+		this.emit({
 			type: 'objSelected',
 			data: {}
 		});
 	}
 
 	_onObjSelected(e) {
-		let self = this;
-
 		let newObj = e.data.obj;
-		let selectedObj = self._selectedObj;
+		let selectedObj = this._selectedObj;
 
 		let needUnselect = selectedObj && (newObj != selectedObj);
 		if (needUnselect) { // Unselect previous object
@@ -301,7 +321,22 @@ export default class Flow extends EventBus {
 			}
 		}
 
-		self._selectedObj = newObj;
+		this._selectedObj = newObj;
+	}
+
+	_genTreeData(node) {
+		let tree = {};
+
+		tree.id = node._id;
+		tree.children = [];
+
+		let downstreamNodes = node.getDownstreamNodes();
+		for (let i in downstreamNodes) {
+			let n = downstreamNodes[i];
+			tree.children.push(this._genTreeData(n));
+		}
+
+		return tree;
 	}
 
 };

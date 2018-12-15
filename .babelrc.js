@@ -15,6 +15,7 @@ const presets = [
 
 const plugins = [
   '@babel/plugin-transform-object-assign',
+  '@babel/plugin-transform-template-literals',
 ];
 
 const ignore = [

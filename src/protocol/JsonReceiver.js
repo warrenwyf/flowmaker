@@ -5,8 +5,6 @@ export default class JsonReceiver {
 	}
 
 	handle(command) {
-		let self = this;
-
 		if (!this._flow) {
 			return;
 		}
@@ -16,10 +14,10 @@ export default class JsonReceiver {
 
 		switch (name) {
 			case 'update_node_status':
-				self._handleUpdateNodeStatus(data);
+				this._handleUpdateNodeStatus(data);
 				break;
 			case 'update_node_progress':
-				self._handleUpdateNodeProgress(data);
+				this._handleUpdateNodeProgress(data);
 				break;
 		}
 	}
