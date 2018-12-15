@@ -18,6 +18,8 @@ const DEFAULT_OPTIONS = {
 	icon: '',
 	selectedColor: '#000',
 	selectedWidth: 2,
+	hoverColor: '#ccc',
+	hoverWidth: 2,
 	statusOutlineColor: '#ccc',
 	statusOutlineWidth: 1,
 	idleColor: '#ccc',
@@ -285,12 +287,16 @@ export default class Node {
 		let g = this._graphDraggable;
 		DomUtil.addListener(g, 'mousedown', this._onGraphMouseDown, this);
 		DomUtil.addListener(g, 'click', this._onGraphClick, this);
+		DomUtil.addListener(g, 'mouseover', this._onGraphMouseOver, this);
+		DomUtil.addListener(g, 'mouseout', this._onGraphMouseOut, this);
 	}
 
 	_removeListeners() {
 		let g = this._graphDraggable;
 		DomUtil.removeListener(g, 'mousedown', this._onGraphMouseDown, this);
 		DomUtil.removeListener(g, 'click', this._onGraphClick, this);
+		DomUtil.removeListener(g, 'mouseover', this._onGraphMouseOver, this);
+		DomUtil.removeListener(g, 'mouseout', this._onGraphMouseOut, this);
 	}
 
 	_snapToGrid(gridWidth, gridHeight) {
@@ -396,6 +402,24 @@ export default class Node {
 		});
 	}
 
+	_onGraphMouseOver(e) {
+		if (this._selected) {
+			return;
+		}
+
+		e.stopPropagation();
+		this._updateHover(true);
+	}
+
+	_onGraphMouseOut(e) {
+		if (this._selected) {
+			return;
+		}
+
+		e.stopPropagation();
+		this._updateHover(false);
+	}
+
 	_onPortMouseDown(e) {
 		let g = this._flow._graph;
 		DomUtil.addListener(g, 'mousemove', this._onPortMouseMove, this);
@@ -488,6 +512,23 @@ export default class Node {
 			bg.setAttribute('stroke-width', options.selectedWidth);
 		} else {
 			bg.setAttribute('stroke', 'none');
+		}
+	}
+
+	_updateHover(flag) {
+		let options = this._options;
+		let bg = this._graphBg;
+
+		if (flag) {
+			bg.setAttribute('stroke', options.hoverColor);
+			bg.setAttribute('stroke-width', options.hoverWidth);
+		} else {
+			if (this._selected) {
+				bg.setAttribute('stroke', options.selectedColor);
+				bg.setAttribute('stroke-width', options.selectedWidth);
+			} else {
+				bg.setAttribute('stroke', 'none');
+			}
 		}
 	}
 

@@ -135,6 +135,24 @@ export default class Link {
 		});
 	}
 
+	_onGraphMouseOver(e) {
+		if (this._selected) {
+			return;
+		}
+
+		e.stopPropagation();
+		this._updateHover(true);
+	}
+
+	_onGraphMouseOut(e) {
+		if (this._selected) {
+			return;
+		}
+
+		e.stopPropagation();
+		this._updateHover(false);
+	}
+
 	_ensureShape() {
 		let flow = this._flow;
 
@@ -175,9 +193,22 @@ export default class Link {
 		}
 	}
 
+	_updateHover(flag) {
+		let options = this._options;
+		let g = this._graph;
+
+		if (flag) {
+			g.setAttribute('stroke-width', options.width * 1.5);
+		} else {
+			g.setAttribute('stroke-width', options.width);
+		}
+	}
+
 	_addListeners() {
 		let g = this._graph;
 		DomUtil.addListener(g, 'click', this._onGraphClick, this);
+		DomUtil.addListener(g, 'mouseover', this._onGraphMouseOver, this);
+		DomUtil.addListener(g, 'mouseout', this._onGraphMouseOut, this);
 
 		let flow = this._flow;
 		flow.on('nodeMove', this._onNodeMove, this);
@@ -187,6 +218,8 @@ export default class Link {
 	_removeListeners() {
 		let g = this._graph;
 		DomUtil.removeListener(g, 'click', this._onGraphClick, this);
+		DomUtil.removeListener(g, 'mouseover', this._onGraphMouseOver, this);
+		DomUtil.removeListener(g, 'mouseout', this._onGraphMouseOut, this);
 
 		let flow = this._flow;
 		flow.off('nodeMove', this._onNodeMove, this);
