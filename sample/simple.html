@@ -86,9 +86,9 @@
 	<div id="flow" ondragover="onProcessorDragOver(event)" ondrop="onProcessorDrop(event)"></div>
 
 	<div id="buttons">
-		<button onclick="onRunClick()">▶︎ Run</button>
-		<button onclick="onStopClick()">◼︎ Stop</button>
-		<button onclick="onLayoutClick()">Auto Layout</button>
+		<button id="btnRun" onclick="onRunClick()">▶︎ Run</button>
+		<button id="btnStop" onclick="onStopClick()" style="display: none">◼︎ Stop</button>
+		<button id="btnAutoLayout" onclick="onLayoutClick()">Auto Layout</button>
 	</div>
 
 	<script type="text/javascript" src="../dist/flowmaker.js"></script>
@@ -101,15 +101,18 @@
 	}
 
 	function onProcessorDragStart(e) {
+		if (flow.isReadOnly()) return;
 		var type = e.target.getAttribute('data-type');
 		e.dataTransfer.setData('type', type);
 	}
 
 	function onProcessorDragOver(e) {
+		if (flow.isReadOnly()) return;
 		e.preventDefault();
 	}
 
 	function onProcessorDrop(e) {
+		if (flow.isReadOnly()) return;
 		e.preventDefault();
 
 		var type = e.dataTransfer.getData('type');
@@ -127,11 +130,17 @@
 	}
 
 	function onRunClick() {
+		document.getElementById('btnRun').style.display = 'none';
+		document.getElementById('btnStop').style.display = '';
+		flow.setReadOnly(true);
 		mockServer.start();
 	}
 
 	function onStopClick() {
 		mockServer.stop();
+		flow.setReadOnly(false);
+		document.getElementById('btnRun').style.display = '';
+		document.getElementById('btnStop').style.display = 'none';
 	}
 
 	function onLayoutClick() {
@@ -166,36 +175,43 @@
 		});
 	}
 
+	var nodes = [];
+	var node;
+
 	var nodes1 = [];
 	var nodes1Count = 3;
 	for (var i = 0; i < nodes1Count; i++) {
-		var node1 = newUnknownNode();
-		flow.addNode(node1, 200, 200 + 100 * i);
-		nodes1.push(node1);
+		node = newUnknownNode();
+		flow.addNode(node, 200, 200 + 100 * i);
+		nodes1.push(node);
+		nodes.push(node);
 	}
 
 	var nodes2 = [];
 	var nodes2Count = 5;
 	for (var i = 0; i < nodes2Count; i++) {
-		var node2 = newCacheNode();
-		flow.addNode(node2, 400, 200 + 100 * i);
-		nodes2.push(node2);
+		node = newCacheNode();
+		flow.addNode(node, 400, 200 + 100 * i);
+		nodes2.push(node);
+		nodes.push(node);
 	}
 
 	var nodes3 = [];
 	var nodes3Count = 4;
 	for (var i = 0; i < nodes3Count; i++) {
-		var node3 = newCacheNode();
-		flow.addNode(node3, 600, 200 + 100 * i);
-		nodes3.push(node3);
+		node = newCacheNode();
+		flow.addNode(node, 600, 200 + 100 * i);
+		nodes3.push(node);
+		nodes.push(node);
 	}
 
 	var nodes4 = [];
 	var nodes4Count = 6;
 	for (var i = 0; i < nodes4Count; i++) {
-		var node4 = newCacheNode();
-		flow.addNode(node4, 800, 200 + 100 * i);
-		nodes4.push(node4);
+		node = newCacheNode();
+		flow.addNode(node, 800, 200 + 100 * i);
+		nodes4.push(node);
+		nodes.push(node);
 	}
 
 	for (var i = 0; i < nodes2Count; i++) {
@@ -219,6 +235,7 @@
 			}
 
 			clearInterval(node._tid);
+			delete node._tid;
 
 			flow.sendCommand(JSON.stringify({
 				name: 'update_node_status',
@@ -257,6 +274,7 @@
 				progress += Math.random() * 10;
 				if (progress > 100) {
 					clearInterval(node._tid);
+					delete node._tid;
 
 					flow.sendCommand(JSON.stringify({
 						name: 'update_node_status',
@@ -267,9 +285,21 @@
 					}));
 
 					// run downstream nodes
-					var nodes = node.getDownstreamNodes();
+					var downstreamNodes = node.getDownstreamNodes();
+					for (var i in downstreamNodes) {
+						mockServer.runNode(downstreamNodes[i].getId());
+					}
+
+					// check if the flow is running
+					var running = false;
 					for (var i in nodes) {
-						mockServer.runNode(nodes[i].getId());
+						if (nodes[i]._tid) {
+							running = true;
+							break;
+						}
+					}
+					if (!running) {
+						onStopClick();
 					}
 				}
 
@@ -291,12 +321,10 @@
 
 
 		stop: function() {
-			for (var i in nodes1) {
-				clearInterval(nodes1[i]._tid);
-			}
-
-			for (var i in nodes2) {
-				clearInterval(nodes2[i]._tid);
+			for (var i in nodes) {
+				var node = nodes[i];
+				clearInterval(node._tid);
+				delete node._tid;
 			}
 		},
 

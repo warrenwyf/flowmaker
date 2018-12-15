@@ -27,6 +27,7 @@ export default class Flow extends EventBus {
 
 		this._options = Object.assign({}, DEFAULT_OPTIONS, options);
 		this._jsonReceiver = new JsonReceiver(this);
+		this._readOnly = false;
 
 		this._x = 0;
 		this._y = 0;
@@ -47,6 +48,10 @@ export default class Flow extends EventBus {
 	}
 
 	clear() {
+		if (this._readOnly) {
+			return;
+		}
+
 		for (let k in this._links) {
 			let link = this._links[k];
 			link.remove();
@@ -93,6 +98,10 @@ export default class Flow extends EventBus {
 	}
 
 	importFromObject(obj) {
+		if (this._readOnly) {
+			return;
+		}
+
 		this.clear();
 
 		this._x = obj.x || 0;
@@ -173,13 +182,29 @@ export default class Flow extends EventBus {
 		return this;
 	}
 
+	setReadOnly(v) {
+		this._readOnly = v;
+	}
+
+	isReadOnly() {
+		return this._readOnly;
+	}
+
 	addNode(node, x, y, options = {}) {
+		if (this._readOnly) {
+			return;
+		}
+
 		node._addToFlow(this, x - this._x, y - this._y, options);
 
 		return node;
 	}
 
 	connect(fromNodeId, fromPortId, toNodeId, toPortId, options) {
+		if (this._readOnly) {
+			return;
+		}
+
 		let connectable = Validator.isConnectable(this, fromNodeId, fromPortId, toNodeId, toPortId);
 		if (!connectable) {
 			return;
@@ -250,6 +275,10 @@ export default class Flow extends EventBus {
 
 	_onWindowKeyDown(e) {
 		if (e.which == 8 /*Backspace*/ || e.which == 46 /*Del*/ ) {
+			if (this._readOnly) {
+				return;
+			}
+
 			let selectedObj = this._selectedObj;
 			if (selectedObj) {
 				if (selectedObj.remove instanceof Function) {
