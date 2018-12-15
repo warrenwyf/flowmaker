@@ -2,6 +2,7 @@ import DomUtil from '../util/DomUtil';
 
 const DEFAULT_OPTIONS = {
 	type: 'input', // input | output
+	optional: false,
 	color: '#000',
 	borderColor: '#000',
 	borderWidth: 1,
@@ -11,10 +12,20 @@ export default class Port {
 
 	constructor(options = {}) {
 		this._options = Object.assign({}, DEFAULT_OPTIONS, options);
+
+		this._connectedLinks = [];
 	}
 
 	getType() {
 		return this._options.type;
+	}
+
+	isOptional() {
+		return this._options.optional;
+	}
+
+	isConnected() {
+		return this._connectedLinks.length > 0;
 	}
 
 	_addToNode(node, idInNode, anchor) {

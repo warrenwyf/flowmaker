@@ -34,6 +34,7 @@ export default class Node {
 
 		this._ports = {}; // key is port id
 
+		this._runnable = false; // show status and progress when the node is runnable
 		this._progress = -1; // show progress bar when this value >= 0
 		this._status = 'idle'; // idle | running | warn | error | success
 	}
@@ -134,6 +135,7 @@ export default class Node {
 		this._addListeners();
 
 		this._ensurePos();
+		this._ensureRunnable();
 
 		return this;
 	}
@@ -206,10 +208,14 @@ export default class Node {
 		desc.setAttribute('alignment-baseline', 'text-before-edge');
 		desc.setAttribute('cursor', 'default');
 
+		// runnable contains status and progress
+		let runnable = this._graphRunnable = DomUtil.createSVG('svg', 'fm-node-runnable', g);
+		runnable.setAttribute('overflow', 'visible');
+		runnable.setAttribute('x', -options.bgSize / 2);
+		runnable.setAttribute('y', options.bgSize / 2 + options.gap);
+
 		// status
-		let status = this._graphStatus = DomUtil.createSVG('rect', 'fm-node-status', g);
-		status.setAttribute('x', -options.bgSize / 2);
-		status.setAttribute('y', options.bgSize / 2 + options.gap);
+		let status = this._graphStatus = DomUtil.createSVG('rect', 'fm-node-status', runnable);
 		status.setAttribute('width', options.bgSize);
 		status.setAttribute('height', options.gap);
 		status.setAttribute('rx', options.gap / 2);
@@ -219,9 +225,9 @@ export default class Node {
 		status.setAttribute('stroke-width', options.statusOutlineWidth);
 
 		// progress
-		let progress = this._graphProgress = DomUtil.createSVG('rect', 'fm-node-progress', g);
-		progress.setAttribute('x', -options.bgSize / 2 + options.statusOutlineWidth);
-		progress.setAttribute('y', options.bgSize / 2 + options.gap + options.statusOutlineWidth);
+		let progress = this._graphProgress = DomUtil.createSVG('rect', 'fm-node-progress', runnable);
+		progress.setAttribute('x', options.statusOutlineWidth);
+		progress.setAttribute('y', options.statusOutlineWidth);
 		progress.setAttribute('width', 0);
 		progress.setAttribute('height', options.gap - 2 * options.statusOutlineWidth);
 		progress.setAttribute('rx', options.gap / 2);
@@ -392,6 +398,32 @@ export default class Node {
 	_ensurePos() {
 		let g = this._graph;
 		g.setAttribute('transform', `translate(${this._x} ${this._y})`);
+	}
+
+	_ensureRunnable() {
+		let g = this._graphRunnable;
+		if (this._runnable) {
+			g.setAttribute('visibility', 'visible');
+		} else {
+			g.setAttribute('visibility', 'hidden');
+		}
+	}
+
+	_updateRunnable() {
+		let runnable = true;
+
+		for (let i in this._ports) {
+			let port = this._ports[i];
+
+			if (!port.isOptional() && !port.isConnected()) {
+				runnable = false;
+				break;
+			}
+		}
+
+		this._runnable = runnable;
+
+		this._ensureRunnable();
 	}
 
 	_updateProgress(v) {

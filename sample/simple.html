@@ -153,6 +153,7 @@
 			icon: 'img/icon-unknown.png',
 			rightPorts: [{
 				type: 'output',
+				optional: true,
 			}],
 		});
 	}
@@ -168,9 +169,11 @@
 				type: 'input',
 			}, {
 				type: 'input',
+				optional: true,
 			}],
 			rightPorts: [{
 				type: 'output',
+				optional: true,
 			}],
 		});
 	}
@@ -215,15 +218,15 @@
 	}
 
 	for (var i = 0; i < nodes2Count; i++) {
-		flow.connect(nodes1[parseInt(Math.random() * nodes1Count)].getId(), 'r-0', nodes2[i].getId(), 'l-' + parseInt(Math.random() * 2));
+		flow.connect(nodes1[parseInt(Math.random() * nodes1Count)].getId(), 'r-0', nodes2[i].getId(), 'l-0');
 	}
 
 	for (var i = 0; i < nodes3Count; i++) {
-		flow.connect(nodes2[parseInt(Math.random() * nodes2Count)].getId(), 'r-0', nodes3[i].getId(), 'l-' + parseInt(Math.random() * 2));
+		flow.connect(nodes2[parseInt(Math.random() * nodes2Count)].getId(), 'r-0', nodes3[i].getId(), 'l-0');
 	}
 
 	for (var i = 0; i < nodes4Count; i++) {
-		flow.connect(nodes3[parseInt(Math.random() * nodes3Count)].getId(), 'r-0', nodes4[i].getId(), 'l-' + parseInt(Math.random() * 2));
+		flow.connect(nodes3[parseInt(Math.random() * nodes3Count)].getId(), 'r-0', nodes4[i].getId(), 'l-0');
 	}
 
 	var mockServer = {

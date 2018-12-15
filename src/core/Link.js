@@ -50,6 +50,10 @@ export default class Link {
 		this._remove();
 	}
 
+	getKey() {
+		return `${this._getFromKey()}|${this._getToKey()}`;
+	}
+
 	_getFromKey() {
 		return `${this._fromNodeId}:${this._fromPortId}`;
 	}
