@@ -138,11 +138,22 @@ export default class Flow extends EventBus {
 	autoLayout() {
 		let { gridWidth, gridHeight } = this._options;
 
-		// start from nodes which have no leftPort
+		// start from nodes which have no leftPort connected
 		let startNodes = {};
 		for (let i in this._nodes) {
+			let leftConnected = false;
+
 			let node = this._nodes[i];
-			if (CommonUtil.isEmptyObject(node._options.leftPorts)) {
+			for (let i = 0; i < node._options.leftPorts.length; i++) {
+				let portId = `l-${i}`;
+				let port = node.getPort(portId);
+				if (port.isConnected()) {
+					leftConnected = true;
+					break;
+				}
+			}
+
+			if (!leftConnected) {
 				startNodes[node._id] = node;
 			}
 		}
@@ -169,14 +180,25 @@ export default class Flow extends EventBus {
 
 				let node = this._nodes[pos.id];
 				if (node) {
-					node._x = -this._x + pos.y * gridWidth + 0.5 * gridWidth;
-					node._y = -this._y + pos.x * gridHeight + (occupiedRows + 0.5) * gridHeight;
-					node._ensurePos();
-					this.emit({ type: 'nodeMove', data: { id: node._id } });
+					let x = -this._x + pos.y * gridWidth + 0.5 * gridWidth;
+					let y = -this._y + pos.x * gridHeight + (occupiedRows + 0.5) * gridHeight;
+					node.moveTo(x, y);
 				}
 			}
 
 			occupiedRows += (maxY - minY + 1);
+		}
+
+		// Unlocated nodes
+		for (let i in this._nodes) {
+			let node = this._nodes[i];
+			if (!(node._id in locatedPositions)) {
+				let x = -this._x + 0.5 * gridWidth;
+				let y = -this._y + (occupiedRows + 0.5) * gridHeight;
+				node.moveTo(x, y);
+
+				occupiedRows += 1;
+			}
 		}
 
 		return this;

@@ -3,6 +3,8 @@ import CommonUtil from '../util/CommonUtil';
 import Port from './Port';
 
 const DEFAULT_OPTIONS = {
+	leftPorts: [],
+	rightPorts: [],
 	extInfo: {}, // info for external reference
 	name: 'Unknown',
 	nameSize: '1em',
@@ -23,8 +25,6 @@ const DEFAULT_OPTIONS = {
 	warnColor: '#fbfb3d',
 	errorColor: '#f14f51',
 	successColor: '#6cc05d',
-	leftPorts: [],
-	rightPorts: [],
 };
 
 export default class Node {
@@ -87,8 +87,6 @@ export default class Node {
 			node && nodes.push(node);
 		}
 
-		for (let i of this._ports) {}
-
 		return nodes;
 	}
 
@@ -116,6 +114,21 @@ export default class Node {
 
 	getBBox() {
 		return this._graph.getBBox();
+	}
+
+	moveTo(x, y) {
+		this._x = x;
+		this._y = y;
+
+		this._ensurePos();
+
+		let flow = this._flow;
+		flow && flow.emit({
+			type: 'nodeMove',
+			data: {
+				id: this._id,
+			}
+		});
 	}
 
 	_addToFlow(flow, x, y, options = {}) {
