@@ -398,27 +398,27 @@ export default class Flow extends EventBus {
 		let linkKey = link.getKey();
 
 		let fromNode = this._nodes[link._fromNodeId];
-		let fromPort = fromNode.getPort(link._fromPortId);
+		let fromPort = fromNode && fromNode.getPort(link._fromPortId);
 		let toNode = this._nodes[link._toNodeId];
-		let toPort = toNode.getPort(link._toPortId);
+		let toPort = toNode && toNode.getPort(link._toPortId);
 
 		// Update relative ports' connectedLinks property
 		switch (action) {
 			case 'add':
-				fromPort._connectedLinks.push(linkKey);
-				toPort._connectedLinks.push(linkKey);
+				fromPort && fromPort._connectedLinks.push(linkKey);
+				toPort && toPort._connectedLinks.push(linkKey);
 				break;
 			case 'remove':
-				let fromIdx = fromPort._connectedLinks.indexOf(linkKey);
-				fromIdx > -1 && fromPort._connectedLinks.splice(fromIdx, 1);
-				let toIdx = toPort._connectedLinks.indexOf(linkKey);
-				toIdx > -1 && toPort._connectedLinks.splice(toIdx, 1);
+				let fromIdx = fromPort && fromPort._connectedLinks.indexOf(linkKey);
+				fromIdx > -1 && fromPort && fromPort._connectedLinks.splice(fromIdx, 1);
+				let toIdx = toPort && toPort._connectedLinks.indexOf(linkKey);
+				toIdx > -1 && toPort && toPort._connectedLinks.splice(toIdx, 1);
 				break;
 		}
 
 		// Update relative nodes' runnable property
-		fromNode._updateRunnable();
-		toNode._updateRunnable();
+		fromNode && fromNode._updateRunnable();
+		toNode && toNode._updateRunnable();
 	}
 
 	_genTreeData(node) {
