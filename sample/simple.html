@@ -44,6 +44,8 @@
 		margin-bottom: 8px;
 		cursor: pointer;
 		user-select: none;
+		font-size: 14px;
+		font-weight: bold;
 	}
 
 	.processor>#icon,
@@ -72,13 +74,17 @@
 
 	<div id="processors">
 		<ul>
-			<li class="processor" draggable="true" ondragstart="onProcessorDragStart(event)" data-type="unknown">
-				<div id="icon" style="background: #ccc"><img src="./img/icon-unknown.png" ondragstart="onImgDragStart(event)"></div>
-					<text id="name">Unknow</text>
+			<li class="processor" draggable="true" ondragstart="onProcessorDragStart(event)" data-type="csv">
+				<div id="icon" style="background: #ccc"><img src="./img/icon-csv.png" ondragstart="onImgDragStart(event)"></div>
+					<text id="name">CSV Reader</text>
 			</li>
 			<li class="processor" draggable="true" ondragstart="onProcessorDragStart(event)" data-type="cache">
 				<div id="icon" style="background: #faa33e"><img src="./img/icon-cache.png" ondragstart="onImgDragStart(event)"></div>
 					<text id="name">Cache</text>
+			</li>
+			<li class="processor" draggable="true" ondragstart="onProcessorDragStart(event)" data-type="send-mail">
+				<div id="icon" style="background: #add8e6"><img src="./img/icon-send-mail.png" ondragstart="onImgDragStart(event)"></div>
+					<text id="name">Send Mail</text>
 			</li>
 		</ul>
 	</div>
@@ -120,11 +126,14 @@
 		var y = e.offsetY;
 
 		switch (type) {
-			case 'unknown':
-				flow.addNode(newUnknownNode(), x, y);
+			case 'csv':
+				flow.addNode(newCsvNode(), x, y);
 				break;
 			case 'cache':
 				flow.addNode(newCacheNode(), x, y);
+				break;
+			case 'send-mail':
+				flow.addNode(newSendMailNode(), x, y);
 				break;
 		}
 	}
@@ -147,10 +156,13 @@
 		flow.autoLayout();
 	}
 
-	function newUnknownNode() {
+	function newCsvNode() {
 		return new flowmaker.Node({
-			extInfo: { type: 'unknown' },
-			icon: 'img/icon-unknown.png',
+			extInfo: { type: 'csv' },
+			name: 'CSV Reader',
+			desc: '',
+			icon: 'img/icon-csv.png',
+			bgColor: '#ccc',
 			rightPorts: [{
 				type: 'output',
 				optional: true,
@@ -178,13 +190,26 @@
 		});
 	}
 
+	function newSendMailNode() {
+		return new flowmaker.Node({
+			extInfo: { type: 'send-mail' },
+			name: 'Send Mail',
+			desc: '',
+			icon: 'img/icon-send-mail.png',
+			bgColor: '#add8e6',
+			leftPorts: [{
+				type: 'input',
+			}],
+		});
+	}
+
 	var nodes = [];
 	var node;
 
 	var nodes1 = [];
 	var nodes1Count = 3;
 	for (var i = 0; i < nodes1Count; i++) {
-		node = newUnknownNode();
+		node = newCsvNode();
 		flow.addNode(node, 200, 200 + 100 * i);
 		nodes1.push(node);
 		nodes.push(node);
@@ -211,7 +236,7 @@
 	var nodes4 = [];
 	var nodes4Count = 6;
 	for (var i = 0; i < nodes4Count; i++) {
-		node = newCacheNode();
+		node = newSendMailNode();
 		flow.addNode(node, 800, 200 + 100 * i);
 		nodes4.push(node);
 		nodes.push(node);
