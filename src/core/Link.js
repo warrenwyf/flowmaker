@@ -238,7 +238,7 @@ export default class Link {
 	_onNodeRemoved(e) { // related Links should be removed too
 		let node = e.data.obj;
 
-		if (node._id != this._toNodeId) {
+		if (node._id != this._toNodeId && node._id != this._fromNodeId) {
 			return;
 		}
 

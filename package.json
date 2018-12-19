@@ -2,7 +2,7 @@
   "name": "flowmaker",
   "author": "warrenwyf",
   "version": "0.1.0",
-  "description": "Draw flow charts in browser",
+  "description": "Make flow charts in browser",
   "repository": {
     "type": "git",
     "url": "https://github.com/warrenwyf/flowmaker"
