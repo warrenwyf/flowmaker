@@ -288,7 +288,18 @@ export default class Flow extends EventBus {
 	}
 
 	_initListeners() {
-		DomUtil.addListener(window, 'resize', this._onWindowResize, this);
+		// Listen container's resize event
+		let self = this;
+		let obj = document.createElement('object');
+		obj.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden;opacity: 0; pointer-events: none; z-index: -1;');
+		obj.onload = function(e) {
+			this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__;
+			DomUtil.addListener(this.contentDocument.defaultView, 'resize', self._onContainerResize, self);
+		};
+		obj.type = 'text/html';
+		obj.data = 'about:blank';
+		this._container.appendChild(obj);
+
 		DomUtil.addListener(window, 'keydown', this._onWindowKeyDown, this);
 
 		let g = this._graph;
@@ -300,7 +311,7 @@ export default class Flow extends EventBus {
 		this.on('linkRemoved', this._onLinkRemoved);
 	}
 
-	_onWindowResize(e) {
+	_onContainerResize(e) {
 		this._ensureSizeAndPos();
 	}
 

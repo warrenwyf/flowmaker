@@ -53,12 +53,11 @@ export default class EventBus {
 		let listener, callback;
 
 		for (let i = listeners.length - 1; i >= 0; i--) {
-			listener = listeners[i];
-
 			if (event._cancel) {
 				break;
 			}
 
+			listener = listeners[i];
 			listener.callback.call(listener.context, event);
 		}
 
