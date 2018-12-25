@@ -372,8 +372,6 @@ export default class Flow extends EventBus {
 	}
 
 	_onGraphClick(e) {
-		e.stopPropagation();
-
 		this.emit({
 			type: 'objSelected',
 			data: {}
