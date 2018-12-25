@@ -17,7 +17,7 @@ export default class DomUtil {
 		return DOM_EVENT_PREFIX + type + '_' + CommonUtil.stamp(fn) + (context ? '_' + CommonUtil.stamp(context) : '');
 	}
 
-	static addListener(element, type, fn, context) {
+	static addListener(element, type, fn, context, capture) {
 		let eventKey = DomUtil.getDomEventKey(type, fn, context);
 		let handler = element[eventKey];
 
@@ -29,13 +29,13 @@ export default class DomUtil {
 			return fn.call(context || element, e);
 		};
 
-		element.addEventListener(type, handler);
+		element.addEventListener(type, handler, capture);
 		element[eventKey] = handler;
 
 		return this;
 	}
 
-	static removeListener(element, type, fn, context) {
+	static removeListener(element, type, fn, context, capture) {
 		let eventKey = DomUtil.getDomEventKey(type, fn, context);
 		let handler = element[eventKey];
 
@@ -43,7 +43,7 @@ export default class DomUtil {
 			return this;
 		}
 
-		element.removeEventListener(type, handler);
+		element.removeEventListener(type, handler, capture);
 		element[eventKey] = null;
 
 		return this;

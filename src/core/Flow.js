@@ -355,7 +355,6 @@ export default class Flow extends EventBus {
 	_onGraphMouseMove(e) {
 		e.stopPropagation();
 
-
 		this._x = this._dragStartX + e.offsetX - this._dragStartEvent.offsetX;
 		this._y = this._dragStartY + e.offsetY - this._dragStartEvent.offsetY;
 

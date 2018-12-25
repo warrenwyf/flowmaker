@@ -27,6 +27,7 @@ const DEFAULT_OPTIONS = {
 	warnColor: '#fbfb3d',
 	errorColor: '#f14f51',
 	successColor: '#6cc05d',
+	clickTolerance: 2,
 };
 
 export default class Node {
@@ -367,6 +368,7 @@ export default class Node {
 		this._dragStartX = this._x;
 		this._dragStartY = this._y;
 		this._dragStartEvent = e;
+		this._forbidClick = true;
 
 		this._graphDraggable.setAttribute('cursor', 'move');
 	}
@@ -385,6 +387,13 @@ export default class Node {
 	_onGraphMouseUp(e) {
 		e.stopPropagation();
 
+		let dx = e.offsetX - this._dragStartEvent.offsetX;
+		let dy = e.offsetY - this._dragStartEvent.offsetY;
+		let tol = this._options['clickTolerance'];
+		if (dx < tol && dy < tol) {
+			this._forbidClick = false;
+		}
+
 		let g = this._flow._graph;
 		DomUtil.removeListener(g, 'mousemove', this._onGraphMouseMove, this);
 		DomUtil.removeListener(g, 'mouseup', this._onGraphMouseUp, this);
@@ -394,6 +403,11 @@ export default class Node {
 
 	_onGraphClick(e) {
 		e.stopPropagation();
+
+		if (this._forbidClick) { // click event will be fired after mouseup event
+			this._forbidClick = false;
+			return;
+		}
 
 		this._updateSelected(true);
 

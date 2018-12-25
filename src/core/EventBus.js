@@ -37,7 +37,7 @@ export default class EventBus {
 		return this;
 	}
 
-	emit(event) {
+	emit(event, desc = false) {
 		if (!event || !event.type) {
 			throw new Error('Not an event');
 			return this;
@@ -52,13 +52,24 @@ export default class EventBus {
 		let listeners = allListeners[event.type] || [];
 		let listener, callback;
 
-		for (let i = listeners.length - 1; i >= 0; i--) {
-			if (event._cancel) {
-				break;
-			}
+		if (desc) {
+			for (let i = listeners.length - 1; i >= 0; i--) {
+				if (event._cancel) {
+					break;
+				}
 
-			listener = listeners[i];
-			listener.callback.call(listener.context, event);
+				listener = listeners[i];
+				listener.callback.call(listener.context, event);
+			}
+		} else {
+			for (let i = 0; i < listeners.length; i++) {
+				if (event._cancel) {
+					break;
+				}
+
+				listener = listeners[i];
+				listener.callback.call(listener.context, event);
+			}
 		}
 
 		return this;
