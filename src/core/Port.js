@@ -16,6 +16,10 @@ export default class Port {
 		this._connectedLinks = [];
 	}
 
+	getOption(k) {
+		return this._options[k] || DEFAULT_OPTIONS[k];
+	}
+
 	getType() {
 		return this._options.type;
 	}

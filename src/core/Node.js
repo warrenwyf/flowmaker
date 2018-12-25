@@ -63,6 +63,10 @@ export default class Node {
 		return obj;
 	}
 
+	getOption(k) {
+		return this._options[k] || DEFAULT_OPTIONS[k];
+	}
+
 	getId() {
 		return this._id;
 	}
