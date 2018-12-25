@@ -65,7 +65,7 @@ export default class Node {
 	}
 
 	getOption(k) {
-		return this._options[k] || DEFAULT_OPTIONS[k];
+		return this._options[k];
 	}
 
 	getId() {
