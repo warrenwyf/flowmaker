@@ -328,6 +328,21 @@ export default class Flow extends EventBus {
 				}
 
 				delete this._selectedObj;
+
+				let cls = '';
+				if (selectedObj instanceof Node) {
+					cls = 'Node';
+				} else if (selectedObj instanceof Link) {
+					cls = 'Link';
+				}
+
+				this.emit({
+					type: 'objRemoved',
+					data: {
+						cls,
+						obj: selectedObj,
+					}
+				});
 			}
 		}
 	}
