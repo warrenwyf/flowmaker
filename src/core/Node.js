@@ -68,6 +68,21 @@ export default class Node {
 		return this._options[k];
 	}
 
+	setOption(k, v) {
+		if (k in DEFAULT_OPTIONS) {
+			this._options[k] = v;
+
+			switch (k) {
+				case 'name':
+					this._graphName.innerHTML = v;
+					break;
+				case 'desc':
+					this._graphDesc.innerHTML = v;
+					break;
+			}
+		}
+	}
+
 	getId() {
 		return this._id;
 	}
