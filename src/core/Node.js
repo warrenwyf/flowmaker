@@ -6,9 +6,7 @@ const DEFAULT_OPTIONS = {
 	leftPorts: [],
 	rightPorts: [],
 	extInfo: {}, // info for external reference
-	name: 'Unknown',
 	nameSize: '1em',
-	desc: 'an unknown node',
 	descSize: '0.9em',
 	gap: 4,
 	bgSize: 40,
@@ -35,6 +33,8 @@ export default class Node {
 	constructor(options = {}) {
 		this._options = Object.assign({}, DEFAULT_OPTIONS, options);
 
+		this._name = 'Unknown';
+		this._desc = '';
 		this._ports = {}; // key is port id
 
 		this._runnable = false; // show status and progress when the node is runnable
@@ -48,6 +48,8 @@ export default class Node {
 			x: this._x,
 			y: this._y,
 			id: this._id,
+			name: this._name,
+			desc: this._desc,
 		};
 
 		for (let k in this._options) {
@@ -68,21 +70,6 @@ export default class Node {
 		return this._options[k];
 	}
 
-	setOption(k, v) {
-		if (k in DEFAULT_OPTIONS) {
-			this._options[k] = v;
-
-			switch (k) {
-				case 'name':
-					this._graphName.innerHTML = v;
-					break;
-				case 'desc':
-					this._graphDesc.innerHTML = v;
-					break;
-			}
-		}
-	}
-
 	getId() {
 		return this._id;
 	}
@@ -91,8 +78,27 @@ export default class Node {
 		return this._ports[portId];
 	}
 
-	unselect() {
+	getName() {
+		return this._name;
+	}
 
+	setName(v) {
+		this._name = v;
+		this._graphName && (this._graphName.innerHTML = v);
+		return this;
+	}
+
+	getDesc() {
+		return this._desc;
+	}
+
+	setDesc(v) {
+		this._desc = v;
+		this._graphDesc && (this._graphDesc.innerHTML = v);
+		return this;
+	}
+
+	unselect() {
 		this._updateSelected(false);
 		return this;
 	}
@@ -224,7 +230,7 @@ export default class Node {
 
 		// name
 		let name = this._graphName = DomUtil.createSVG('text', 'fm-node-name', g);
-		name.innerHTML = options.name;
+		name.innerHTML = this._name;
 		name.setAttribute('x', 0);
 		name.setAttribute('y', -options.bgSize / 2 - options.gap);
 		name.setAttribute('font-size', options.nameSize);
@@ -235,7 +241,7 @@ export default class Node {
 
 		// desc
 		let desc = this._graphDesc = DomUtil.createSVG('text', 'fm-node-desc', g);
-		desc.innerHTML = options.desc;
+		desc.innerHTML = this._desc;
 		desc.setAttribute('x', 0);
 		desc.setAttribute('y', options.bgSize / 2 + options.gap * 2);
 		desc.setAttribute('font-size', options.descSize);

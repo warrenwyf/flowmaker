@@ -159,22 +159,18 @@
 	function newCsvNode() {
 		return new flowmaker.Node({
 			extInfo: { type: 'csv' },
-			name: 'CSV Reader',
-			desc: '',
 			icon: 'img/icon-csv.png',
 			bgColor: '#ccc',
 			rightPorts: [{
 				type: 'output',
 				optional: true,
 			}],
-		});
+		}).setName('CSV Reader');
 	}
 
 	function newCacheNode() {
 		return new flowmaker.Node({
 			extInfo: { type: 'cache' },
-			name: 'Cache',
-			desc: '',
 			icon: 'img/icon-cache.png',
 			bgColor: '#faa33e',
 			leftPorts: [{
@@ -187,20 +183,18 @@
 				type: 'output',
 				optional: true,
 			}],
-		});
+		}).setName('Cache');
 	}
 
 	function newSendMailNode() {
 		return new flowmaker.Node({
 			extInfo: { type: 'send-mail' },
-			name: 'Send Mail',
-			desc: '',
 			icon: 'img/icon-send-mail.png',
 			bgColor: '#add8e6',
 			leftPorts: [{
 				type: 'input',
 			}],
-		});
+		}).setName('Send Mail');
 	}
 
 	var nodes = [];
