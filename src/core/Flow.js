@@ -109,9 +109,14 @@ export default class Flow extends EventBus {
 		this._idSeq = obj.idSeq || 1;
 
 		for (let k in obj.nodes) {
-			let { x, y, options, id, name, desc } = obj.nodes[k];
+			let { x, y, options, id, name, desc, extInfos } = obj.nodes[k];
 			let node = new Node(options);
 			node.setName(name).setDesc(desc);
+			if (extInfos instanceof Object) {
+				for (let k in extInfos) {
+					node.setExtInfo(k, extInfos[k]);
+				}
+			}
 			this.addNode(node, x, y, { id });
 		}
 

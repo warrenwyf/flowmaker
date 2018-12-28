@@ -5,7 +5,6 @@ import Port from './Port';
 const DEFAULT_OPTIONS = {
 	leftPorts: [],
 	rightPorts: [],
-	extInfo: {}, // info for external reference
 	nameSize: '1em',
 	nameGap: 6,
 	descSize: '0.9em',
@@ -42,15 +41,12 @@ export default class Node {
 			options.rightPorts = [];
 		}
 
-		if (!(options.extInfo instanceof Object)) {
-			options.extInfo = {};
-		}
-
 		this._options = Object.assign({}, DEFAULT_OPTIONS, options);
 
 		this._name = 'Unknown';
 		this._desc = '';
 		this._ports = {}; // key is port id
+		this._extInfos = {}; // external reference informations
 
 		this._runnable = false; // show status and progress when the node is runnable
 		this._progress = -1; // show progress bar when this value >= 0
@@ -65,6 +61,7 @@ export default class Node {
 			id: this._id,
 			name: this._name,
 			desc: this._desc,
+			extInfos: this._extInfos,
 		};
 
 		for (let k in this._options) {
@@ -110,6 +107,15 @@ export default class Node {
 	setDesc(v) {
 		this._desc = v;
 		this._graphDesc && (this._graphDesc.innerHTML = v);
+		return this;
+	}
+
+	getExtInfo(k) {
+		return this._extInfos[k];
+	}
+
+	setExtInfo(k, v) {
+		this._extInfos[k] = v;
 		return this;
 	}
 
@@ -506,7 +512,7 @@ export default class Node {
 		for (let i in this._ports) {
 			let port = this._ports[i];
 
-			if (!port.isOptional() && !port.isConnected()) {
+			if (!port._options['optional'] && !port.isConnected()) {
 				runnable = false;
 				break;
 			}

@@ -17,15 +17,7 @@ export default class Port {
 	}
 
 	getOption(k) {
-		return this._options[k] || DEFAULT_OPTIONS[k];
-	}
-
-	getType() {
-		return this._options.type;
-	}
-
-	isOptional() {
-		return this._options.optional;
+		return this._options[k];
 	}
 
 	isConnected() {
