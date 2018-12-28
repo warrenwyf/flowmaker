@@ -7,8 +7,9 @@ const DEFAULT_OPTIONS = {
 	rightPorts: [],
 	extInfo: {}, // info for external reference
 	nameSize: '1em',
+	nameGap: 6,
 	descSize: '0.9em',
-	gap: 4,
+	descGap: 4,
 	bgSize: 40,
 	bgRadius: 4,
 	bgColor: '#ccc',
@@ -20,6 +21,8 @@ const DEFAULT_OPTIONS = {
 	hoverWidth: 2,
 	statusOutlineColor: '#ccc',
 	statusOutlineWidth: 1,
+	statusHeight: 4,
+	statusGap: 4,
 	idleColor: '#ccc',
 	runningColor: '#3b88fd',
 	warnColor: '#fbfb3d',
@@ -232,7 +235,7 @@ export default class Node {
 		let name = this._graphName = DomUtil.createSVG('text', 'fm-node-name', g);
 		name.innerHTML = this._name;
 		name.setAttribute('x', 0);
-		name.setAttribute('y', -options.bgSize / 2 - options.gap);
+		name.setAttribute('y', -options.bgSize / 2 - options.nameGap);
 		name.setAttribute('font-size', options.nameSize);
 		name.setAttribute('text-anchor', 'middle');
 		name.setAttribute('alignment-baseline', 'text-after-edge');
@@ -243,7 +246,7 @@ export default class Node {
 		let desc = this._graphDesc = DomUtil.createSVG('text', 'fm-node-desc', g);
 		desc.innerHTML = this._desc;
 		desc.setAttribute('x', 0);
-		desc.setAttribute('y', options.bgSize / 2 + options.gap * 2);
+		desc.setAttribute('y', options.bgSize / 2 + options.descGap + options.statusHeight + options.statusGap);
 		desc.setAttribute('font-size', options.descSize);
 		desc.setAttribute('text-anchor', 'middle');
 		desc.setAttribute('alignment-baseline', 'text-before-edge');
@@ -253,14 +256,14 @@ export default class Node {
 		let runnable = this._graphRunnable = DomUtil.createSVG('svg', 'fm-node-runnable', g);
 		runnable.setAttribute('overflow', 'visible');
 		runnable.setAttribute('x', -options.bgSize / 2);
-		runnable.setAttribute('y', options.bgSize / 2 + options.gap);
+		runnable.setAttribute('y', options.bgSize / 2 + options.statusGap);
 
 		// status
 		let status = this._graphStatus = DomUtil.createSVG('rect', 'fm-node-status', runnable);
 		status.setAttribute('width', options.bgSize);
-		status.setAttribute('height', options.gap);
-		status.setAttribute('rx', options.gap / 2);
-		status.setAttribute('ry', options.gap / 2);
+		status.setAttribute('height', options.statusHeight);
+		status.setAttribute('rx', options.statusHeight / 2);
+		status.setAttribute('ry', options.statusHeight / 2);
 		status.setAttribute('fill', options.idleColor);
 		status.setAttribute('stroke', options.statusOutlineColor);
 		status.setAttribute('stroke-width', options.statusOutlineWidth);
@@ -270,9 +273,9 @@ export default class Node {
 		progress.setAttribute('x', options.statusOutlineWidth);
 		progress.setAttribute('y', options.statusOutlineWidth);
 		progress.setAttribute('width', 0);
-		progress.setAttribute('height', options.gap - 2 * options.statusOutlineWidth);
-		progress.setAttribute('rx', options.gap / 2);
-		progress.setAttribute('ry', options.gap / 2);
+		progress.setAttribute('height', options.statusHeight - 2 * options.statusOutlineWidth);
+		progress.setAttribute('rx', options.statusHeight / 2);
+		progress.setAttribute('ry', options.statusHeight / 2);
 		progress.setAttribute('fill', options.runningColor);
 
 		// used by ports
