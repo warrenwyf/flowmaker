@@ -162,6 +162,7 @@
 			bgColor: '#ccc',
 			rightPorts: [{
 				type: 'output',
+				dataTypes: ['table'],
 				optional: true,
 			}],
 		}).setName('CSV Reader');
@@ -173,12 +174,15 @@
 			bgColor: '#faa33e',
 			leftPorts: [{
 				type: 'input',
+				dataTypes: ['any'],
 			}, {
 				type: 'input',
+				dataTypes: ['any'],
 				optional: true,
 			}],
 			rightPorts: [{
 				type: 'output',
+				dataTypes: ['any'],
 				optional: true,
 			}],
 		}).setName('Cache');
@@ -190,6 +194,7 @@
 			bgColor: '#add8e6',
 			leftPorts: [{
 				type: 'input',
+				dataTypes: ['any'],
 			}],
 		}).setName('Send Mail');
 	}
