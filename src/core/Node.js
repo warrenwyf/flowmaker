@@ -34,6 +34,18 @@ const DEFAULT_OPTIONS = {
 export default class Node {
 
 	constructor(options = {}) {
+		if (!(options.leftPorts instanceof Array)) {
+			options.leftPorts = [];
+		}
+
+		if (!(options.rightPorts instanceof Array)) {
+			options.rightPorts = [];
+		}
+
+		if (!(options.extInfo instanceof Object)) {
+			options.extInfo = {};
+		}
+
 		this._options = Object.assign({}, DEFAULT_OPTIONS, options);
 
 		this._name = 'Unknown';
